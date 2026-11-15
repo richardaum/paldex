@@ -1,0 +1,7 @@
+[
+  {"id": "FlameBuffalo", "name": "Arsox", "slug": "arsox", "dex": "#058",
+   "elements": ["Fire"], "hp": 85, "attack": 100, "defense": 95, "stamina": 120,
+   "workSpeed": 100, "work": {"Kindling": 3, "Lumbering": 2}, "mountSpeed": 1050,
+   "partnerSkill": "Warm Body", "breedRank": 2320, "food": 3, "rarity": 4,
+   "drops": ["Horn", "Flame Organ"], "nocturnal": false, "combat": 190}
+]
