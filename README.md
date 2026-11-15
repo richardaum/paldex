@@ -8,7 +8,15 @@ os melhores em combate, montaria (aérea, terrestre, aquática) e trabalho de ba
 - Python 3.10+ e Node.js 18+
 - Palworld instalado (o app lê o `Level.sav` do seu save; **só leitura**)
 
-## Rodando
+## Rodando (atalho no Windows)
+
+```
+.un.ps1           # instala o que faltar e sobe API + frontend via pm2 → http://localhost:5173
+.un.ps1 -Dev      # sem pm2, tudo nesta janela
+.un.ps1 -Stop     # para  (também: -Logs, -Status)
+```
+
+## Rodando (manual)
 
 ```
 git clone https://github.com/richardaum/paldex.git
