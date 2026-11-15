@@ -8,6 +8,10 @@
   h1{font-size:20px;margin:0 0 4px}
   .sub{color:var(--muted);font-size:13px}
   .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:0 24px 16px}
+  .chips{display:flex;flex-direction:column;gap:8px;padding:0 24px 16px}
+  .chip-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .chip-group-label{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);min-width:64px}
+  .chip-group-items{display:flex;gap:6px;flex-wrap:wrap}
   .toolbar input[type=text]{flex:1;min-width:220px;background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px}
   select,button{background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px;cursor:pointer}
   button:hover{border-color:var(--accent)}

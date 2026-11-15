@@ -31,15 +31,42 @@ function locationLabel(location){
   return m ? `Base ${m[1]}` : location;
 }
 
-function renderChips(){
-  const c = document.getElementById('chips');
-  c.innerHTML = selected.map(p => `
+function groupKey(p){ return p._real ? p._real.location : '_manual'; }
+
+function groupSortRank(key){
+  if (key === 'team') return -1;
+  if (key === '_manual') return Infinity;
+  const m = /^base-(\d+)$/.exec(key);
+  return m ? Number(m[1]) : Infinity - 1;
+}
+
+function groupLabel(key){
+  return key === '_manual' ? 'Adicionados manualmente' : (locationLabel(key) || key);
+}
+
+function chipHtml(p){
+  return `
     <span class="chip" data-slug="${p.slug}">
       <img src="${imgUrl(p)}" alt="">
       ${p.name}
-      ${p._real ? `<span class="tag loc-tag">${locationLabel(p._real.location)}</span>` : ''}
       ${isLockedInBase(p) ? `<span class="dash" title="Pal está numa base, não pode ser removido daqui">🔒</span>` : `<button data-remove="${p.slug}" title="Remover">✕</button>`}
-    </span>`).join('');
+    </span>`;
+}
+
+function renderChips(){
+  const c = document.getElementById('chips');
+  const groups = new Map();
+  selected.forEach(p => {
+    const key = groupKey(p);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(p);
+  });
+  const orderedKeys = [...groups.keys()].sort((a, b) => groupSortRank(a) - groupSortRank(b));
+  c.innerHTML = orderedKeys.map(key => `
+    <div class="chip-group">
+      <div class="chip-group-label">${groupLabel(key)}</div>
+      <div class="chip-group-items">${groups.get(key).map(chipHtml).join('')}</div>
+    </div>`).join('');
   c.querySelectorAll('[data-remove]').forEach(btn => {
     btn.onclick = () => { selected = selected.filter(p => p.slug !== btn.dataset.remove); render(); };
   });
