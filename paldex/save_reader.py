@@ -155,10 +155,12 @@ def extract_pals_from_gvas(gvas: dict) -> list[dict]:
             continue
         instance_id = entry["key"]["InstanceId"]["value"]
         container_id = instance_to_container.get(instance_id)
-        if container_id is None or container_id == box_container_id:
+        if container_id is None:
             continue
         if container_id == team_container_id:
             location = "team"
+        elif container_id == box_container_id:
+            location = "palbox"
         else:
             location = base_labels[container_id]
 
@@ -185,3 +187,31 @@ def extract_pals_from_gvas(gvas: dict) -> list[dict]:
         })
 
     return results
+
+
+def unlocked_techs_from_gvas(gvas: dict) -> list[str]:
+    """Names from a Players/<uid>.sav GVAS dict (UnlockedRecipeTechnologyNames)."""
+    save_data = gvas["properties"]["SaveData"]["value"]
+    prop = save_data.get("UnlockedRecipeTechnologyNames")
+    return list(prop["value"]["values"]) if prop else []
+
+
+def extract_unlocked_techs(sav_path: "Path | None" = None) -> list[str]:
+    """Technologies unlocked by the player(s) of the same world as Level.sav.
+
+    Read-only. Saddles unlock via technology names like ``SkillUnlock_<CharacterID>``.
+    """
+    import palworld_save_tools.archive
+    from palworld_save_tools.gvas import GvasFile
+    from palworld_save_tools.json_tools import CustomEncoder
+    from palworld_save_tools.paltypes import PALWORLD_TYPE_HINTS
+
+    sav_path = sav_path or find_latest_level_sav()
+    palworld_save_tools.archive.FArchiveReader.eof = lambda self: True
+    names: set[str] = set()
+    for player_sav in sorted((Path(sav_path).parent / "Players").glob("*.sav")):
+        raw_gvas, _ = decompress_sav_to_gvas(player_sav.read_bytes())
+        gvas_file = GvasFile.read(raw_gvas, PALWORLD_TYPE_HINTS, {}, allow_nan=True)
+        gvas_dict = json.loads(json.dumps(gvas_file.dump(), cls=CustomEncoder))
+        names.update(unlocked_techs_from_gvas(gvas_dict))
+    return sorted(names)

@@ -38,20 +38,55 @@ function mergeRealPalWithSpecies(realPal, speciesById) {
 
 if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', async () => {
-    const [speciesResp, palsResp] = await Promise.all([
+    const [speciesResp, palsResp, techsResp] = await Promise.all([
       fetch('/api/species'),
       fetch('/api/pals'),
+      fetch('/api/techs'),
     ]);
+    setUnlockedTechs(await techsResp.json());
     const species = await speciesResp.json();
     const realPals = await palsResp.json();
 
     setSpeciesData(species);
     const speciesById = Object.fromEntries(species.map(s => [s.id, s]));
-    selected = realPals.map(p => mergeRealPalWithSpecies(p, speciesById));
+    owned = realPals.map(p => mergeRealPalWithSpecies(p, speciesById));
     render();
 
     const resyncBtn = document.getElementById('resyncBtn');
     const syncError = document.getElementById('syncError');
+    const syncStatus = document.getElementById('syncStatus');
+    let knownVersion = null;
+
+    async function reloadPals() {
+      const [palsR, techsR] = await Promise.all([fetch('/api/pals'), fetch('/api/techs')]);
+      setUnlockedTechs(await techsR.json());
+      owned = (await palsR.json()).map(p => mergeRealPalWithSpecies(p, speciesById));
+      render();
+    }
+
+    function showStatus(status) {
+      if (syncStatus) {
+        syncStatus.textContent = status.last_sync
+          ? 'Sincronizado às ' + new Date(status.last_sync * 1000).toLocaleTimeString('pt-BR')
+          : 'Aguardando o save…';
+      }
+      if (syncError) syncError.textContent = status.error ? 'Erro ao ler o save: ' + status.error : '';
+    }
+
+    async function pollStatus() {
+      try {
+        const status = await (await fetch('/api/status')).json();
+        showStatus(status);
+        if (knownVersion !== null && status.version !== knownVersion) await reloadPals();
+        knownVersion = status.version;
+      } catch (e) {
+        // server briefly unreachable; try again on the next tick
+      }
+    }
+
+    pollStatus();
+    setInterval(pollStatus, 5000);
+
     if (resyncBtn) {
       resyncBtn.onclick = async () => {
         if (syncError) syncError.textContent = '';
@@ -60,9 +95,12 @@ if (typeof document !== 'undefined') {
           if (syncError) syncError.textContent = 'Não encontrei nenhum save do Palworld neste computador.';
           return;
         }
-        const freshPals = await resp.json();
-        selected = freshPals.map(p => mergeRealPalWithSpecies(p, speciesById));
-        render();
+        if (!resp.ok) {
+          pollStatus();
+          return;
+        }
+        await reloadPals();
+        pollStatus();
       };
     }
   });

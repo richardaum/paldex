@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paldex — Palworld</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header>
+  <h1>Paldex</h1>
+  <div class="sub">Seus Pals do Palworld, lidos direto do save: time, bases e os melhores em combate, montaria e trabalho de base.</div>
+</header>
+
+<div class="toolbar">
+  <span id="syncStatus" class="sync-status">Aguardando o save…</span>
+  <button id="resyncBtn" title="O save é monitorado automaticamente; use só para forçar uma releitura">🔄 Forçar</button>
+  <div id="mountSwitch" class="seg" style="display:none" title="Montaria: considerar só selas já desbloqueadas ou todas as possíveis">
+    <span>Montaria:</span>
+    <button data-mode="available">Disponível</button>
+    <button data-mode="possible">Possível</button>
+  </div>
+</div>
+<div id="syncError" style="color:#ff6b6b;padding:0 24px 8px"></div>
+
+<main id="main">
+  <div class="empty">Carregando…</div>
+</main>
+
+<div id="chips" class="chips"></div>
+
+<script src="js/paldex.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

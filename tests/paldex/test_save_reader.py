@@ -5,7 +5,7 @@ import time
 import zlib
 from pathlib import Path
 
-sys.path.insert(0, "pal-compare")
+sys.path.insert(0, "paldex")
 from save_reader import extract_pals_from_gvas, decompress_sav_to_gvas, find_latest_level_sav, extract_pals
 
 def _enum(v):
@@ -60,20 +60,21 @@ def _gvas(char_entries, container_entries):
 
 ZERO = "00000000-0000-0000-0000-000000000000"
 
-def test_classifies_team_base_and_drops_box():
+def test_classifies_team_base_and_palbox():
     chars = [
         _pal("p1", "Arsox"),            # team (5-slot container)
         _pal("p2", "Anubis", work_bonus_entries=[("MonsterFarm", 1)]),  # base-1
-        _pal("boxed", "Chikipi"),       # box (largest) -> dropped
+        _pal("boxed", "Chikipi"),       # box (largest) -> palbox
         _pal("player1", "Human", is_player=True),  # dropped, is player
     ]
     containers = [
         _container("c-team", ["p1", ZERO, ZERO, ZERO, ZERO]),   # 5 slots -> team
         _container("c-base", ["p2"]),                            # 1 slot -> base-1
-        _container("c-box", ["boxed"] * 10),                     # biggest -> Pal Box, dropped
+        _container("c-box", ["boxed"] * 10),                     # biggest -> Pal Box
     ]
     result = {p["instance_id"]: p for p in extract_pals_from_gvas(_gvas(chars, containers))}
-    assert set(result) == {"p1", "p2"}
+    assert set(result) == {"p1", "p2", "boxed"}
+    assert result["boxed"]["location"] == "palbox"
     assert result["p1"]["location"] == "team"
     assert result["p2"]["location"] == "base-1"
     assert result["p2"]["work_bonus"] == {"MonsterFarm": 1}
@@ -180,3 +181,11 @@ def test_extract_pals_raises_when_no_save(tmp_path, monkeypatch):
         assert False, "expected FileNotFoundError"
     except FileNotFoundError:
         pass
+
+
+def test_unlocked_techs_from_gvas_reads_technology_names():
+    from save_reader import unlocked_techs_from_gvas
+    gvas = {"properties": {"SaveData": {"value": {
+        "UnlockedRecipeTechnologyNames": {"value": {"values": ["Workbench", "SkillUnlock_Boar"]}}}}}}
+    assert unlocked_techs_from_gvas(gvas) == ["Workbench", "SkillUnlock_Boar"]
+    assert unlocked_techs_from_gvas({"properties": {"SaveData": {"value": {}}}}) == []

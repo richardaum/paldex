@@ -20,6 +20,8 @@ CREATE TABLE IF NOT EXISTS pals (
 )
 """
 
+TECHS_SCHEMA = "CREATE TABLE IF NOT EXISTS techs (name TEXT PRIMARY KEY)"
+
 SPECIES_SCHEMA = """
 CREATE TABLE IF NOT EXISTS species (
     id TEXT PRIMARY KEY,
@@ -65,6 +67,7 @@ def get_connection(db_path: str, seed_path: str = "species_seed.json") -> sqlite
     conn.row_factory = sqlite3.Row
     conn.execute(PALS_SCHEMA)
     conn.execute(SPECIES_SCHEMA)
+    conn.execute(TECHS_SCHEMA)
     conn.commit()
     _seed_species_if_empty(conn, seed_path)
     return conn
@@ -136,3 +139,13 @@ def get_all_species(conn: sqlite3.Connection) -> list[dict]:
         d["nocturnal"] = bool(d["nocturnal"])
         result.append(d)
     return result
+
+
+def replace_all_techs(conn: sqlite3.Connection, names: list[str]) -> None:
+    conn.execute("DELETE FROM techs")
+    conn.executemany("INSERT OR IGNORE INTO techs (name) VALUES (?)", [(n,) for n in names])
+    conn.commit()
+
+
+def get_all_techs(conn: sqlite3.Connection) -> list[str]:
+    return [r[0] for r in conn.execute("SELECT name FROM techs ORDER BY name").fetchall()]

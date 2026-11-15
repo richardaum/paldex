@@ -2,7 +2,7 @@ import json
 import sqlite3
 import sys
 import threading
-sys.path.insert(0, "pal-compare")
+sys.path.insert(0, "paldex")
 from db import get_connection, replace_all_pals, get_all_pals, get_all_species
 
 SAMPLE = [

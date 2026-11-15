@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bestOf, computeVerdict, setSpeciesData } = require('../../pal-compare/public/js/compare.js');
+const { bestOf, computeVerdict, setSpeciesData } = require('../../paldex/public/js/paldex.js');
 
 const ARSOX = { id: 'FlameBuffalo', name: 'Arsox', slug: 'arsox', hp: 85, attack: 100,
                  defense: 95, stamina: 120, mountSpeed: 1050, work: { Kindling: 3, Lumbering: 2 },
