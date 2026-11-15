@@ -1,5 +1,85 @@
+import json
+import os
+from pathlib import Path
+
+import ooz
+
 ZERO_GUID = "00000000-0000-0000-0000-000000000000"
 TEAM_SIZE = 5
+
+PLZ_MAGIC = b"PlZ"
+PLM_MAGIC = b"PlM"
+
+NEEDED_KEYS = [
+    ".worldSaveData.CharacterSaveParameterMap.Value.RawData",
+    ".worldSaveData.CharacterContainerSaveData.Value.Slots.Slots.RawData",
+]
+
+
+def decompress_sav_to_gvas(data: bytes) -> "tuple[bytes, int]":
+    import zlib
+
+    uncompressed_len = int.from_bytes(data[0:4], "little")
+    compressed_len = int.from_bytes(data[4:8], "little")
+    magic_bytes = data[8:11]
+    save_type = data[11]
+    data_start_offset = 12
+    if magic_bytes == b"CNK":
+        uncompressed_len = int.from_bytes(data[12:16], "little")
+        compressed_len = int.from_bytes(data[16:20], "little")
+        magic_bytes = data[20:23]
+        save_type = data[23]
+        data_start_offset = 24
+
+    payload = data[data_start_offset:data_start_offset + compressed_len]
+
+    if magic_bytes == PLM_MAGIC:
+        return ooz.decompress(payload, uncompressed_len), save_type
+
+    if magic_bytes == PLZ_MAGIC:
+        out = zlib.decompress(payload)
+        if save_type == 0x32:
+            out = zlib.decompress(out)
+        return out, save_type
+
+    raise Exception(f"unknown magic bytes: {magic_bytes!r}")
+
+
+def find_latest_level_sav() -> Path:
+    root = Path(os.environ["LOCALAPPDATA"]) / "Pal" / "Saved" / "SaveGames"
+    candidates = [
+        p for p in root.glob("**/Level.sav")
+        if "backup" not in p.parts
+    ] if root.exists() else []
+    if not candidates:
+        raise FileNotFoundError("no Level.sav found")
+    return max(candidates, key=lambda p: p.stat().st_mtime)
+
+
+def extract_pals(sav_path: "Path | None" = None) -> list[dict]:
+    sav_path = sav_path or find_latest_level_sav()
+
+    import palworld_save_tools.archive
+    import palworld_save_tools.palsav as palsav
+    from palworld_save_tools.gvas import GvasFile
+    from palworld_save_tools.json_tools import CustomEncoder
+    from palworld_save_tools.paltypes import PALWORLD_CUSTOM_PROPERTIES, PALWORLD_TYPE_HINTS
+
+    palsav.decompress_sav_to_gvas = decompress_sav_to_gvas
+    palworld_save_tools.archive.FArchiveReader.eof = lambda self: True
+
+    with open(sav_path, "rb") as f:
+        data = f.read()
+    raw_gvas, _ = decompress_sav_to_gvas(data)
+
+    custom_properties = {
+        key: value for key, value in PALWORLD_CUSTOM_PROPERTIES.items()
+        if key in NEEDED_KEYS
+    }
+    gvas_file = GvasFile.read(raw_gvas, PALWORLD_TYPE_HINTS, custom_properties, allow_nan=True)
+    gvas_dict = json.loads(json.dumps(gvas_file.dump(), cls=CustomEncoder))
+
+    return extract_pals_from_gvas(gvas_dict)
 
 
 def _strip_enum(value: str) -> str:

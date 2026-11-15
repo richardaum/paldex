@@ -1,6 +1,12 @@
+import os
+import struct
 import sys
+import time
+import zlib
+from pathlib import Path
+
 sys.path.insert(0, "pal-compare")
-from save_reader import extract_pals_from_gvas
+from save_reader import extract_pals_from_gvas, decompress_sav_to_gvas, find_latest_level_sav, extract_pals
 
 def _enum(v):
     return {"value": {"value": v}}
@@ -121,3 +127,56 @@ def test_pal_missing_optional_fields_gets_defaults_instead_of_crashing():
     assert result["passive_skills"] == []
     assert result["nickname"] == ""
     assert result["friendship"] == 0
+
+def _plz_sav(payload: bytes) -> bytes:
+    compressed = zlib.compress(payload)
+    return (struct.pack("<II", len(payload), len(compressed))
+            + b"PlZ" + bytes([0x31]) + compressed)
+
+def test_decompress_plz_zlib_path():
+    gvas, save_type = decompress_sav_to_gvas(_plz_sav(b"GVAS-fake-payload"))
+    assert gvas == b"GVAS-fake-payload"
+    assert save_type == 0x31
+
+def test_decompress_plm_uses_ooz(monkeypatch):
+    calls = {}
+    def fake_decompress(payload, uncompressed_len):
+        calls["payload"] = payload
+        calls["uncompressed_len"] = uncompressed_len
+        return b"X" * uncompressed_len
+    monkeypatch.setattr("save_reader.ooz.decompress", fake_decompress)
+    raw = struct.pack("<II", 10, 3) + b"PlM" + bytes([0x31]) + b"abc"
+    gvas, save_type = decompress_sav_to_gvas(raw)
+    assert gvas == b"X" * 10
+    assert calls == {"payload": b"abc", "uncompressed_len": 10}
+
+def test_find_latest_level_sav_skips_backup_and_picks_newest(tmp_path, monkeypatch):
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+    base = tmp_path / "Pal" / "Saved" / "SaveGames" / "111" / "WORLDA"
+    base.mkdir(parents=True)
+    (base / "Level.sav").write_bytes(b"old")
+    backup = tmp_path / "Pal" / "Saved" / "SaveGames" / "111" / "WORLDB" / "backup" / "world" / "x"
+    backup.mkdir(parents=True)
+    (backup / "Level.sav").write_bytes(b"ignored")
+    newer = tmp_path / "Pal" / "Saved" / "SaveGames" / "222" / "WORLDC"
+    newer.mkdir(parents=True)
+    (newer / "Level.sav").write_bytes(b"new")
+    os.utime(base / "Level.sav", (time.time() - 100, time.time() - 100))
+    found = find_latest_level_sav()
+    assert found == newer / "Level.sav"
+
+def test_find_latest_level_sav_raises_when_none(tmp_path, monkeypatch):
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+    try:
+        find_latest_level_sav()
+        assert False, "expected FileNotFoundError"
+    except FileNotFoundError:
+        pass
+
+def test_extract_pals_raises_when_no_save(tmp_path, monkeypatch):
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+    try:
+        extract_pals()
+        assert False, "expected FileNotFoundError"
+    except FileNotFoundError:
+        pass
