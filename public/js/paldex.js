@@ -214,10 +214,10 @@ function computeVerdict(pals = owned){
     return {
       // Cópias de outro nível/nota da mesma espécie do vencedor não ocupam vaga no top (a tela as esconderia).
       top: sorted.filter(x => x.v===max || !x.pal || !valid.some(w => w.v===max && w.pal && w.pal.slug===x.pal.slug))
-                 .slice(0,3).map(x=>({pal:x.pal, v:x.v})),
+                 .slice(0,4).map(x=>({pal:x.pal, v:x.v})),
       winnerPals: valid.filter(x=>x.v===max).slice(0,5).map(x=>x.pal),
       winner: new Set(valid.map(x=>x.v)).size<=1 ? null : winners.join(' & '),
-      detail: sorted.slice(0,3).map(x=>`${x.name} ${x.v.toLocaleString('pt-BR')}${unit||''}`).join(' · ')
+      detail: sorted.slice(0,4).map(x=>`${x.name} ${x.v.toLocaleString('pt-BR')}${unit||''}`).join(' · ')
     };
   }
 
