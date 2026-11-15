@@ -20,6 +20,10 @@ function elementTags(p){
   return (p.elements||[]).map(e => `<span class="tag" style="border-color:${ELEMENT_COLOR[e]||'#555'};color:${ELEMENT_COLOR[e]||'#ccc'}">${e}</span>`).join(' ') || '<span class="dash">—</span>';
 }
 
+function isLockedInBase(p){
+  return !!(p._real && /^base-\d+$/.test(p._real.location || ''));
+}
+
 function locationLabel(location){
   if (!location) return '';
   if (location === 'team') return 'Time';
@@ -34,7 +38,7 @@ function renderChips(){
       <img src="${imgUrl(p)}" alt="">
       ${p.name}
       ${p._real ? `<span class="tag loc-tag">${locationLabel(p._real.location)}</span>` : ''}
-      <button data-remove="${p.slug}" title="Remover">✕</button>
+      ${isLockedInBase(p) ? `<span class="dash" title="Pal está numa base, não pode ser removido daqui">🔒</span>` : `<button data-remove="${p.slug}" title="Remover">✕</button>`}
     </span>`).join('');
   c.querySelectorAll('[data-remove]').forEach(btn => {
     btn.onclick = () => { selected = selected.filter(p => p.slug !== btn.dataset.remove); render(); };
@@ -135,7 +139,7 @@ function renderTable(){
   if (selected.length === 0) return '';
   const header = `<tr><th class="rowlabel"></th>${selected.map(p => `
     <th class="pal-col-head">
-      <button class="remove" data-remove="${p.slug}">✕</button>
+      ${isLockedInBase(p) ? `<span class="remove dash" title="Pal está numa base, não pode ser removido daqui">🔒</span>` : `<button class="remove" data-remove="${p.slug}">✕</button>`}
       <img class="pimg" src="${imgUrl(p)}" alt="">
       <div class="pname">${p.name}</div>
       <div class="dash">${p.dex}</div>
