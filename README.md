@@ -10,12 +10,17 @@ os melhores em combate, montaria (aérea, terrestre, aquática) e trabalho de ba
 
 ## Rodando (atalho no Windows)
 
+```powershell
+# Se a execução de scripts estiver bloqueada, use o bypass (vale só para esse processo):
+powershell -NoProfile -ExecutionPolicy Bypass -File .\run.ps1
+
+.\run.ps1           # avalia o sistema, instala o que faltar, sobe API + frontend (pm2) → http://localhost:5173
+.\run.ps1 -Check    # só avalia os pré-requisitos
+.\run.ps1 -Dev      # sem pm2, tudo nesta janela
+.\run.ps1 -Stop     # para  (também: -Logs, -Status)
 ```
-.un.ps1           # avalia o sistema, instala o que faltar, sobe API + frontend (pm2) → http://localhost:5173
-.un.ps1 -Check    # só avalia os pré-requisitos
-.un.ps1 -Dev      # sem pm2, tudo nesta janela
-.un.ps1 -Stop     # para  (também: -Logs, -Status)
-```
+
+Com bypass, os parâmetros vão no fim: `powershell -NoProfile -ExecutionPolicy Bypass -File .\run.ps1 -Check`.
 
 O script confere Python 3.10+, Node 18+, pip/npm, pm2, disco/memória, portas 5000/5173, se há
 save do Palworld e acesso ao CDN dos ícones. Instala as dependências (e o pm2, se faltar) e termina
