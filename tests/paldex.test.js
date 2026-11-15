@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bestOf, computeVerdict, setSpeciesData, setPalRules } = require('../public/js/paldex.js');
+const { bestOf, computeVerdict, setSpeciesData, setPalRules, setPlayerLevel } = require('../public/js/paldex.js');
 setPalRules(require('../public/pal-rules.json'));
 
 const ARSOX = { id: 'FlameBuffalo', name: 'Arsox', slug: 'arsox', hp: 85, attack: 100,
@@ -84,4 +84,19 @@ test('computeVerdict does not rank Foxparks (weapon Pal, not a mount) as a land 
 
 test('setSpeciesData does not throw and replaces the internal species list', () => {
   setSpeciesData([ARSOX, ANUBIS, ASTEGON]);
+});
+
+test('combat is compared at the player level: the Pal own level does not matter', () => {
+  setPlayerLevel(40);
+  try {
+    const copy = (p, level) => ({ ...p, _real: { level, location: 'team', talentHp: 0, talentShot: 0, talentDefense: 0, passiveSkills: [] } });
+    const low = computeVerdict([copy(ARSOX, 5)]).combatV.top[0].v;
+    const high = computeVerdict([copy(ARSOX, 50)]).combatV.top[0].v;
+    assert.strictEqual(low, high);
+    // atq 400, hp 2400 (500+200+85*0.5*40), def 335 (50+95*0.075*40)
+    assert.strictEqual(low, Math.round(Math.cbrt(400 * 2400 * 335) * 10) / 10);
+    // cada estrela de condensação vale +5% nos três: ×1,05 no score
+    const star = computeVerdict([{ ...copy(ARSOX, 5), _real: { ...copy(ARSOX, 5)._real, rank: 5 } }]).combatV.top[0].v;
+    assert.ok(star > low * 1.19 && star < low * 1.21);
+  } finally { setPlayerLevel(null); }
 });

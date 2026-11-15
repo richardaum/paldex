@@ -134,9 +134,31 @@ function passiveNames(p, key){
   return ((p._real||{}).passiveSkills || []).filter(id => (PASSIVE_FX[id]||{})[key]).map(id => `${PASSIVE_FX[id].name} ${PASSIVE_FX[id][key] > 0 ? '+' : ''}${Math.round(PASSIVE_FX[id][key]*100)}%`);
 }
 const r1 = x => x == null ? null : Math.round(x * 10) / 10;
-function atkOf(p){ return p.attack == null ? null : p.attack * (1 + ((p._real||{}).talentShot || 0) * 0.003 + passiveBonus(p, 'atk')); }
-function defOf(p){ return p.defense == null ? null : p.defense * (1 + passiveBonus(p, 'def')); }
-function combatOf(p){ return p.combat == null ? null : r1(p.combat + (atkOf(p) - p.attack) + ((defOf(p) ?? 0) - (p.defense ?? 0)) / 2); }
+// Baliza de comparação: nível do jogador (lido do save). Todos os Pals são comparados como se estivessem nesse nível,
+// então Pal de nível alto não ganha só por ter mais nível. Sem o nível (null), cai nos valores base da espécie.
+let playerLevel = null;
+function setPlayerLevel(n){ playerLevel = Number.isFinite(n) && n > 0 ? n : null; }
+// Fórmulas de status do Palworld no nível L, com IV (0-100 → +0,3% por ponto) e condensação (rank 1 = 0 estrelas; +5% por estrela).
+function iv(p, key){ return 1 + ((p._real||{})[key] || 0) * 0.003; }
+function condense(p){ return 1 + (Math.max(1, (p._real||{}).rank || 1) - 1) * 0.05; }
+function hpOf(p){ return p.hp == null ? null : playerLevel == null ? p.hp : Math.floor((500 + 5 * playerLevel + p.hp * 0.5 * playerLevel * iv(p, 'talentHp')) * condense(p)); }
+function atkOf(p){
+  if (p.attack == null) return null;
+  const base = playerLevel == null ? p.attack * iv(p, 'talentShot') : (100 + p.attack * 0.075 * playerLevel * iv(p, 'talentShot')) * condense(p);
+  return base * (1 + passiveBonus(p, 'atk'));
+}
+function defOf(p){
+  if (p.defense == null) return null;
+  const base = playerLevel == null ? p.defense : (50 + p.defense * 0.075 * playerLevel * iv(p, 'talentDefense')) * condense(p);
+  return base * (1 + passiveBonus(p, 'def'));
+}
+// Combate: sem o nível do jogador, a soma antiga. Com ele, média geométrica ∛(ataque × HP × defesa):
+// ataque = dano causado; HP × defesa = quanto aguenta. Pesa os três proporcionalmente (a soma deixava o HP dominar).
+function combatOf(p){
+  if (playerLevel == null) return p.combat == null ? null : r1(p.combat + (atkOf(p) - p.attack) + ((defOf(p) ?? 0) - (p.defense ?? 0)) / 2);
+  if (p.attack == null || p.hp == null || p.defense == null) return null;
+  return r1(Math.cbrt(atkOf(p) * hpOf(p) * defOf(p)));
+}
 function workLevel(p, cat){ return (p.workDisplay || p.work || {})[cat] || 0; }
 // Pontuação de aptidão: nível × velocidade de trabalho das passivas (ex.: Artesão +50% → ×1,5).
 // Transporte também conta a velocidade de movimento das passivas (o Pal anda mais rápido entre o depósito e a base).
@@ -247,7 +269,10 @@ let tipPals = [];
 
 function tipReason(p, label){
   const fx = (...ks) => { const n = ks.flatMap(k => passiveNames(p, k)); return n.length ? `<br>Passivas: ${n.join(', ')}` : ''; };
-  if (/combate/i.test(label)) return `Ataque ${fmt(r1(atkOf(p)))} + Vida ${p.hp}÷2 + Defesa ${fmt(r1(defOf(p)))}÷2` + fx('atk', 'def');
+  const lv = (p._real||{}).level;
+  const levelNote = playerLevel != null && lv && lv !== playerLevel
+    ? `<br><i class="lvl-note">⚠ Nível atual deste Pal: ${lv}. O valor é a projeção para quando ele ${lv < playerLevel ? 'chegar' : 'estiver'} no nível ${playerLevel} (o seu), para a comparação ser justa.</i>` : '';
+  if (/combate/i.test(label)) return (playerLevel != null ? `No nível ${playerLevel} (o seu) · ` : '') + (playerLevel != null ? `∛(Ataque ${fmt(r1(atkOf(p)))} × Vida ${fmt(hpOf(p))} × Defesa ${fmt(r1(defOf(p)))})` : `Ataque ${fmt(r1(atkOf(p)))} + Vida ${p.hp}÷2 + Defesa ${fmt(r1(defOf(p)))}÷2`) + (((p._real||{}).rank || 1) > 1 && playerLevel != null ? `<br>Condensação: +${((p._real.rank - 1) * 5)}% nos três` : '') + fx('atk', 'def') + levelNote;
   if (/alcance/i.test(label)) return `Corrida ${fmt(mountSpeedOf(p))} × fôlego ${fmt(p.stamina)} ÷ 1000 = ${fmt(reachOf(p))}<br>Quanto maior, mais longe ele corre antes de cansar.` + fx('move');
   if (/montaria/i.test(label)) return (/normal/i.test(label) ? `Velocidade normal (run) ${fmt(mountRunOf(p))}` : `Velocidade de corrida (ride sprint) ${fmt(mountSpeedOf(p))}`) + fx('move');
   const wc = WORK_BY_LABEL[label];
@@ -499,5 +524,5 @@ function render(){
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { setPartnerSkills, bestOf, computeVerdict, setSpeciesData, setPalRules, setUnlockedTechs, saddleLocked };
+  module.exports = { setPartnerSkills, bestOf, computeVerdict, setSpeciesData, setPalRules, setUnlockedTechs, saddleLocked, setPlayerLevel };
 }

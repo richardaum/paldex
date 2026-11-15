@@ -6,7 +6,7 @@ import zlib
 from pathlib import Path
 
 sys.path.insert(0, ".")
-from save_reader import extract_pals_from_gvas, decompress_sav_to_gvas, find_latest_level_sav, extract_pals
+from save_reader import player_level_from_gvas, extract_pals_from_gvas, decompress_sav_to_gvas, find_latest_level_sav, extract_pals
 
 def _enum(v):
     return {"value": {"value": v}}
@@ -189,3 +189,13 @@ def test_unlocked_techs_from_gvas_reads_technology_names():
         "UnlockedRecipeTechnologyNames": {"value": {"values": ["Workbench", "SkillUnlock_Boar"]}}}}}}
     assert unlocked_techs_from_gvas(gvas) == ["Workbench", "SkillUnlock_Boar"]
     assert unlocked_techs_from_gvas({"properties": {"SaveData": {"value": {}}}}) == []
+
+
+def test_player_level_is_highest_player_entry():
+    chars = [_pal("a", "Human", is_player=True, level=31), _pal("b", "Human", is_player=True, level=40),
+             _pal("p1", "Arsox", level=50)]
+    assert player_level_from_gvas(_gvas(chars, [])) == 40
+
+
+def test_player_level_none_without_player():
+    assert player_level_from_gvas(_gvas([_pal("p1", "Arsox")], [])) is None

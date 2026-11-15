@@ -42,13 +42,15 @@ function mergeRealPalWithSpecies(realPal, speciesById) {
 
 if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', async () => {
-    const [speciesResp, palsResp, techsResp, rulesResp, partnerResp] = await Promise.all([
+    const [speciesResp, palsResp, techsResp, rulesResp, partnerResp, statusResp] = await Promise.all([
       fetch('/api/species'),
       fetch('/api/pals'),
       fetch('/api/techs'),
       fetch('/pal-rules.json'),
       fetch('/partner-skills.json'),
+      fetch('/api/status'),
     ]);
+    try { setPlayerLevel((await statusResp.json()).player_level); } catch (e) {}
     setPalRules(await rulesResp.json());
     try { setPartnerSkills(await partnerResp.json()); } catch (e) { /* sem tradução: cai no nome em inglês */ }
     setUnlockedTechs(await techsResp.json());
@@ -66,7 +68,8 @@ if (typeof document !== 'undefined') {
     let knownVersion = null;
 
     async function reloadPals() {
-      const [palsR, techsR] = await Promise.all([fetch('/api/pals'), fetch('/api/techs')]);
+      const [palsR, techsR, statusR] = await Promise.all([fetch('/api/pals'), fetch('/api/techs'), fetch('/api/status')]);
+      try { setPlayerLevel((await statusR.json()).player_level); } catch (e) {}
       setUnlockedTechs(await techsR.json());
       owned = (await palsR.json()).map(p => mergeRealPalWithSpecies(p, speciesById));
       render();

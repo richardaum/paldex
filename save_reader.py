@@ -119,7 +119,25 @@ def extract_pals(sav_path: "Path | None" = None) -> list[dict]:
         team_ids, box_ids = extract_player_container_ids(sav_path)
     except Exception:
         team_ids, box_ids = None, None
-    return extract_pals_from_gvas(gvas_dict, team_ids, box_ids)
+    pals = PalList(extract_pals_from_gvas(gvas_dict, team_ids, box_ids))
+    pals.player_level = player_level_from_gvas(gvas_dict)
+    return pals
+
+
+class PalList(list):
+    """Lista de Pals que também carrega o nível do jogador lido do mesmo save."""
+    player_level = None
+
+
+def player_level_from_gvas(gvas: dict) -> "int | None":
+    """Maior nível entre os personagens-jogador do Level.sav (baliza da comparação de combate)."""
+    world = gvas["properties"]["worldSaveData"]["value"]
+    levels = []
+    for entry in world["CharacterSaveParameterMap"]["value"]:
+        sp = entry["value"]["RawData"]["value"]["object"]["SaveParameter"]["value"]
+        if sp.get("IsPlayer", {}).get("value"):
+            levels.append(_byte_value(sp, "Level", 1))
+    return max(levels) if levels else None
 
 
 def _strip_enum(value: str) -> str:

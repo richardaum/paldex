@@ -34,7 +34,7 @@ def create_app(db_path: str = "data/cache.sqlite3", seed_path: str = "species_se
     app.config["DB_CONN"] = conn
 
     lock = threading.Lock()
-    status = {"version": 0, "last_sync": None, "error": None}
+    status = {"version": 0, "last_sync": None, "error": None, "player_level": None}
     watch = {"seen": None, "synced": None}
 
     def sync_now():
@@ -54,6 +54,7 @@ def create_app(db_path: str = "data/cache.sqlite3", seed_path: str = "species_se
                 replace_all_techs(conn, extract_unlocked_techs(*sav))
             except Exception:
                 pass  # techs only drive the optional "saddle locked" indicator
+            status["player_level"] = getattr(pals, "player_level", None)
             status["version"] += 1
             status["last_sync"] = time.time()
             status["error"] = None
