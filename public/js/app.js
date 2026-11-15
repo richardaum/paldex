@@ -40,6 +40,19 @@ function mergeRealPalWithSpecies(realPal, speciesById) {
   return merged;
 }
 
+// Placeholder pulsando enquanto os Pals do outro mundo são lidos.
+function showSkeleton() {
+  const main = document.getElementById('main');
+  if (!main) return;
+  const chips = document.getElementById('chips');
+  if (chips) chips.innerHTML = '';
+  main.innerHTML = '<div class="sk-wrap" aria-busy="true" aria-label="Carregando mundo">' +
+    '<div class="sk-card sk-title"></div>' +
+    '<div class="sk-row">' + '<div class="sk-card"></div>'.repeat(3) + '</div>' +
+    '<div class="sk-row">' + '<div class="sk-card"></div>'.repeat(3) + '</div>' +
+    '</div>';
+}
+
 if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', async () => {
     const [speciesResp, palsResp, techsResp, rulesResp, partnerResp, statusResp] = await Promise.all([
@@ -111,8 +124,12 @@ if (typeof document !== 'undefined') {
       } catch (e) {}
     }
     async function chooseSave(id) {
-      const resp = await fetch('/api/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-      if (resp.ok) { await reloadPals(); pollStatus(); }
+      showSkeleton();
+      try {
+        const resp = await fetch('/api/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+        if (resp.ok) { await reloadPals(); pollStatus(); }
+      } catch (e) {}
+      finally { if (document.querySelector('#main .sk-card')) render(); } // falha: tira o skeleton
     }
     if (saveSelect) saveSelect.onchange = () => {
       try { localStorage.setItem('paldexSave', saveSelect.value); } catch (e) {}
