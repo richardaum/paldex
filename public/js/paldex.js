@@ -8,6 +8,9 @@ function setPartnerSkills(map){ PARTNER_PT = map || {}; }
 let PASSIVE_FX = {}, MOUNT_TYPES = {}, AIR_MOUNTS = new Set(), WATER_MOUNTS = new Set(), NON_MOUNTS = new Set(), MOUNT_OVERRIDES = {};
 let byId = {};
 let BASE_GOALS = {};
+const ELEMENT_PT = { Neutral: 'Neutro', Fire: 'Fogo', Water: 'Água', Grass: 'Planta', Electric: 'Elétrico', Ice: 'Gelo', Ground: 'Terra', Dark: 'Sombrio', Dragon: 'Dragão' };
+const ELEMENT_LABEL = 'Melhor combate · ';
+const elementOfLabel = label => label.startsWith(ELEMENT_LABEL) ? Object.keys(ELEMENT_PT).find(e => ELEMENT_LABEL + ELEMENT_PT[e] === label) : null;
 const BASE_SLOTS = 15;
 
 // In-game work suitability icons (cdn.paldb.cc, T_icon_palwork_NN); index order verified visually.
@@ -251,7 +254,18 @@ function computeVerdict(pals = owned){
     };
   }
 
-  return {combatV, mountV, mountByType, baseV, workByCat};
+  // Melhor em combate por elemento (Pal de dois elementos entra nos dois); mesma métrica do card de combate.
+  const combatByElement = {};
+  for (const el of Object.keys(ELEMENT_PT)) {
+    const list = pals.filter(p => (p.elements || []).includes(el));
+    if (!list.length) continue;
+    const group = groupBySpecies(list, combatOf);
+    const v = winnerBlock(group.map(combatOf), group.map(p => p.name), '', undefined, group);
+    v.total = group.length;
+    combatByElement[el] = v;
+  }
+
+  return {combatV, mountV, mountByType, baseV, workByCat, combatByElement};
 }
 
 // Sugestão de composição de base: escolhe até BASE_SLOTS Pals (cópias individuais, de qualquer lugar do save) para o objetivo.
@@ -465,6 +479,8 @@ function setupTooltips(root){
 }
 
 function labelIcon(label){
+  const el = elementOfLabel(label);
+  if (el) return elementTags({ elements: [el] });
   if (WORK_BY_LABEL[label]) return workIcon(WORK_BY_LABEL[label]) + (WORK_BY_LABEL[label] === 'Transporting' ? '<span class="bolt" title="Transporte + velocidade">⚡</span>' : '');
   let i = /alcance/i.test(label) ? '🔋'
     : /combate/i.test(label) ? '⚔️'
@@ -479,6 +495,8 @@ function labelIcon(label){
 }
 
 function shortLabel(label){
+  const el = elementOfLabel(label);
+  if (el) return ELEMENT_PT[el];
   if (WORK_BY_LABEL[label]) return WORK_PT[WORK_BY_LABEL[label]];
   if (/montaria|alcance/i.test(label)) {
     const t = /aérea/i.test(label) ? 'Aérea' : /terrestre/i.test(label) ? 'Terrestre' : /aquática/i.test(label) ? 'Aquática' : 'Montaria';
@@ -492,7 +510,7 @@ function shortLabel(label){
 function renderVerdict(){
   const pool = owned;
   if (pool.length < 1) return '';
-  const {combatV, mountV, mountByType, workByCat} = computeVerdict(pool);
+  const {combatV, mountV, mountByType, workByCat, combatByElement} = computeVerdict(pool);
   tipPals = [];
   const icon = (p, cls, v, metric, why) => {
     if (!p) return '';
@@ -537,10 +555,15 @@ function renderVerdict(){
         return card(MOUNT_TYPES[t] + spec[0], spec[1], spec[2], total, {mode, hasReach: !!m.reach});
       }).join('')
     : card('Melhor montaria · corrida', mountV, MOUNT_SPRINT, groupBySpecies(pool.filter(mountCounts)).length, {mode: 'sprint', hasReach: false});
-  return baseSuggestionHtml(icon) + `<div class="verdict">
+  return baseSuggestionHtml(icon) + `<h2 class="sec-title">Combate e montaria</h2><div class="verdict">
     ${card('Melhor para combate', combatV, 'Combate', groupBySpecies(pool, combatOf).length)}
     ${mountCards}
   </div>
+  <h2 class="sec-title">Mais fortes por elemento</h2>
+  <div class="verdict compact">
+    ${Object.entries(combatByElement).map(([el, v]) => card(ELEMENT_LABEL + ELEMENT_PT[el], v, 'Combate', v.total)).join('')}
+  </div>
+  <h2 class="sec-title">Melhores por aptidão de trabalho</h2>
   <div class="verdict compact">
     ${Object.entries(workByCat).map(([cat, v]) => card(workLabel(cat), v, 'Aptidão: ' + WORK_PT[cat], v.total)).join('')}
   </div>`;

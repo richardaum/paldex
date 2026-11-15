@@ -126,3 +126,11 @@ test('suggestBase breeding reserves a male+female pair of the same species', () 
   assert.strictEqual(r.pairs[0].male._real.talentHp, 90);
   assert.strictEqual(r.pairs[0].female._real.gender, 'Female');
 });
+
+test('computeVerdict ranks combat per element, with dual-element Pals in both', () => {
+  const mk = (slug, elements, attack) => ({ name: slug, slug, elements, hp: 100, attack, defense: 100, combat: attack + 100, work: {} });
+  const { combatByElement } = computeVerdict([mk('f1', ['Fire'], 100), mk('f2', ['Fire', 'Dark'], 150), mk('d1', ['Dark'], 120)]);
+  assert.strictEqual(combatByElement.Fire.winner, 'f2');
+  assert.strictEqual(combatByElement.Dark.winner, 'f2');
+  assert.strictEqual(combatByElement.Water, undefined);
+});

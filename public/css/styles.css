@@ -153,3 +153,4 @@
 .verdict.compact .vcard:has(.speed-seg){flex-wrap:wrap}
 .base-sug-all{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);cursor:pointer;margin-left:auto}
 .base-sug-all+.base-sug-count{margin-left:0}
+.sec-title{font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:0 0 6px 2px}
