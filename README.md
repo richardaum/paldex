@@ -11,8 +11,8 @@ os melhores em combate, montaria (aérea, terrestre, aquática) e trabalho de ba
 ## Rodando
 
 ```
-git clone https://github.com/richardaum/palworld.git
-cd palworld
+git clone https://github.com/richardaum/paldex.git
+cd paldex
 pip install -r requirements.txt
 npm install
 ```
