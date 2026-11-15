@@ -5,11 +5,8 @@
   *{box-sizing:border-box}
   html{height:100%}
   body{margin:0;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);color:var(--text);font:14px/1.45 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-  header,.toolbar,#syncError,.chips{flex:none}
-  header{padding:20px 24px 10px}
-  h1{font-size:20px;margin:0 0 4px}
-  .sub{color:var(--muted);font-size:13px}
-  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:0 24px 16px}
+  .toolbar,#syncError,.chips{flex:none}
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:16px 24px}
   .chips{display:flex;flex-direction:column;gap:8px;padding:12px 24px 16px;max-height:35dvh;overflow:auto;border-top:1px solid var(--border)}
   .chip-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .chip-group-label{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);min-width:64px}
@@ -122,3 +119,37 @@
   .picon.lg .dupe{bottom:18px;font-size:11px}
 
 .lvl-note { display:block; margin-top:4px; color:#f5c451; font-style:normal; }
+
+.base-sug{background:var(--panel);border:1px solid var(--border);border-radius:12px;margin-bottom:14px}
+.base-sug>summary{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;list-style:none}
+.base-sug>summary::-webkit-details-marker{display:none}
+.base-sug>summary::before{content:"▸";color:var(--muted);font-size:11px}
+.base-sug[open]>summary::before{content:"▾"}
+.base-sug-title{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.base-sug select{font-size:12px;padding:2px 6px;max-width:60%}
+.base-sug-count{color:var(--muted);font-size:12px;margin-left:auto}
+.base-body{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:8px 12px;border-top:1px solid var(--border)}
+.brow{display:inline-flex;align-items:center;gap:6px;min-width:0;padding:3px 8px 3px 6px;border:1px solid var(--border);border-radius:9px;background:rgba(255,255,255,.02)}
+.brole{flex:0 0 auto;display:flex;align-items:center;gap:2px;min-width:40px;font-size:12px}
+.brole small{color:var(--muted)}
+.bpals{display:flex;flex-wrap:wrap;gap:3px 4px}
+.bpair{display:inline-flex;align-items:center;gap:1px}
+.bpair i{color:var(--muted);font-style:normal;font-size:11px}
+
+/* Cards de aptidão de trabalho (compactos): ícone da aptidão + vencedor + top numa linha só, sem rótulo por extenso. */
+.verdict.compact{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin-bottom:12px}
+.verdict.compact .vcard{flex-wrap:nowrap;gap:6px;padding:5px 8px;border-radius:9px}
+.verdict.compact .vcard .label{flex:0 0 auto;margin:0;font-size:0;line-height:1}
+.verdict.compact .vcard .label-ico{font-size:15px;margin:0}
+.verdict.compact .winner-icons{gap:3px;flex-wrap:nowrap}
+.verdict.compact .picon.lg img{width:28px;height:28px;box-shadow:none}
+.verdict.compact .picon.sm img{width:20px;height:20px}
+.verdict.compact .picon b,.verdict.compact .picon.lg b{font-size:9px;margin-top:0}
+.verdict.compact .top-icons{gap:3px;padding-left:6px;flex-wrap:nowrap}
+.verdict.compact .picon .dupe{bottom:9px;right:-8px;font-size:8px;padding:1px 3px}
+.verdict.compact .picon .alpha .alpha-ico,.verdict.compact .picon.lg .alpha .alpha-ico{width:11px;height:11px}
+.verdict.compact .speed-seg{position:static;order:5;margin-left:auto}
+.verdict.compact .speed-seg button{padding:0 3px;font-size:9px}
+.verdict.compact .vcard:has(.speed-seg){flex-wrap:wrap}
+.base-sug-all{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);cursor:pointer;margin-left:auto}
+.base-sug-all+.base-sug-count{margin-left:0}

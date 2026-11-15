@@ -7,6 +7,8 @@ let PARTNER_PT = {};
 function setPartnerSkills(map){ PARTNER_PT = map || {}; }
 let PASSIVE_FX = {}, MOUNT_TYPES = {}, AIR_MOUNTS = new Set(), WATER_MOUNTS = new Set(), NON_MOUNTS = new Set(), MOUNT_OVERRIDES = {};
 let byId = {};
+let BASE_GOALS = {};
+const BASE_SLOTS = 15;
 
 // In-game work suitability icons (cdn.paldb.cc, T_icon_palwork_NN); index order verified visually.
 function workIcon(cat, n, plain){
@@ -31,6 +33,7 @@ function setPalRules(rules){
   WATER_MOUNTS = new Set(rules.mounts.water);
   NON_MOUNTS = new Set(rules.mounts.nonMounts);
   MOUNT_OVERRIDES = rules.mounts.overrides || {};
+  BASE_GOALS = Object.fromEntries(Object.entries(rules.baseGoals || {}).filter(([k]) => !k.startsWith('_')));
 }
 
 function setSpeciesData(list){
@@ -251,6 +254,61 @@ function computeVerdict(pals = owned){
   return {combatV, mountV, mountByType, baseV, workByCat};
 }
 
+// Sugestão de composição de base: escolhe até BASE_SLOTS Pals (cópias individuais, de qualquer lugar do save) para o objetivo.
+// Cada papel pega o melhor Pal ainda livre na aptidão; no "balanceado" as aptidões mais raras escolhem primeiro.
+// Breeding reserva antes casais macho+fêmea da mesma espécie (melhores IVs/passivas), que ficam na Fazenda de Criação.
+function geneScore(p){
+  const r = p._real || {};
+  const good = (r.passiveSkills || []).filter(id => { const fx = PASSIVE_FX[id] || {}; return (fx.atk||0) > 0 || (fx.def||0) > 0 || (fx.work||0) > 0 || (fx.move||0) > 0; }).length;
+  return (r.talentHp || 0) + (r.talentShot || 0) + (r.talentDefense || 0) + 20 * good;
+}
+function suggestBase(pals, goalId, slots = BASE_SLOTS){
+  const goal = BASE_GOALS[goalId];
+  if (!goal) return { roles: [], pairs: [] };
+  const pool = pals.filter(p => p._real && !p._unknownSpecies);
+  const used = new Set();
+  const pairs = [];
+  if (goal.pairs){
+    const bySpecies = new Map();
+    pool.forEach(p => {
+      const g = p._real.gender;
+      if (g !== 'Male' && g !== 'Female') return;
+      if (!bySpecies.has(p.slug)) bySpecies.set(p.slug, { Male: [], Female: [] });
+      bySpecies.get(p.slug)[g].push(p);
+    });
+    const cands = [];
+    for (const { Male, Female } of bySpecies.values()){
+      if (!Male.length || !Female.length) continue;
+      const best = a => a.slice().sort((x, y) => geneScore(y) - geneScore(x))[0];
+      const m = best(Male), f = best(Female);
+      cands.push({ male: m, female: f, v: geneScore(m) + geneScore(f) });
+    }
+    cands.sort((a, b) => b.v - a.v).slice(0, goal.pairs).forEach(c => { pairs.push(c); used.add(c.male); used.add(c.female); });
+  }
+  const free = () => pool.filter(p => !used.has(p));
+  let quotas = goal.quotas.map(([cat, n]) => ({ cat, n }));
+  if (goal.scarceFirst) quotas = quotas.map(q => ({ ...q, k: pool.filter(p => workLevel(p, q.cat) > 0).length })).sort((a, b) => a.k - b.k);
+  const roles = [];
+  let left = slots - pairs.length * 2;
+  for (const { cat, n } of quotas){
+    const cands = free().filter(p => workLevel(p, cat) > 0)
+      // desempate: o Pal menos versátil fica com a vaga, deixando os versáteis para outros papéis
+      .sort((a, b) => workScore(b, cat) - workScore(a, cat) || workOf(a) - workOf(b));
+    const picks = cands.slice(0, Math.min(n, left));
+    picks.forEach(p => used.add(p));
+    left -= picks.length;
+    if (picks.length) roles.push({ cat, want: n, cands: cands.length, pals: picks.map((p, i) => ({ p, v: workScore(p, cat), rank: i + 1 })) });
+  }
+  // Vagas que sobraram (faltou Pal com alguma aptidão) vão para o papel principal.
+  if (left > 0 && roles.length){
+    const main = roles[0];
+    const extra = free().filter(p => workLevel(p, main.cat) > 0)
+      .sort((a, b) => workScore(b, main.cat) - workScore(a, main.cat)).slice(0, left);
+    extra.forEach(p => { used.add(p); main.pals.push({ p, v: workScore(p, main.cat), rank: main.pals.length + 1 }); });
+  }
+  return { roles, pairs };
+}
+
 // Mount type isn't in the species data; classified by hand (base slug, variants share the type).
 const MOUNT_REACH = 'Alcance (velocidade × fôlego)', MOUNT_SPRINT = 'Velocidade de montaria (corrida)', MOUNT_RUN = 'Velocidade de montaria (normal)';
 // Têm velocidade de montaria nos dados do jogo, mas não são montarias (ex.: Foxparks é arma/lança-chamas).
@@ -283,6 +341,7 @@ function tipReason(p, label){
 
 // Explanation shown in the secondary tooltip over the (bold) metric row.
 function whyHtml({p, why}){
+  if (why.head) return `<b>${why.head}</b><small>${why.body}</small>`;   // sugestão de base: texto já montado
   const label = why.label.replace(/^Melhor/, 'melhor');
   const head = why.win
     ? `🏆 ${why.tie ? 'Empatado como melhor' : 'É o melhor'} — ${label}`
@@ -299,7 +358,7 @@ function tipHtml({p, v, metric, why, locked}){
   const r = p._real || {};
   const work = `<span class="wk-line">${workIcons(p.workDisplay || p.work)}</span>`;
   const rows = [
-    metric ? [why ? `<b class="metric-name" data-why="1">${why.win ? '🏆 ' : ''}${metric}</b>` : metric, why ? `<b>${fmt(v)}</b>` : fmt(v)] : null,
+    metric ? [why ? `<b class="metric-name" data-why="1">${why.win ? '🏆 ' : why.head ? '⭐ ' : ''}${metric}</b>` : metric, why ? `<b>${fmt(v)}</b>` : fmt(v)] : null,
     r.level ? [p._count ? 'Nível (melhor cópia)' : 'Nível', r.level + (r.nickname ? ` · "${r.nickname}"` : '')] : null,
     p._count ? ['No seu save', `${p._count}× — ` + Object.entries(p._locs).map(([l,n]) => `${groupLabel(l)} ${n}`).join(', ')] : null,
     r.location ? [p._count ? 'Local (melhor cópia)' : 'Local', locationLabel(r.location)] : null,
@@ -478,11 +537,74 @@ function renderVerdict(){
         return card(MOUNT_TYPES[t] + spec[0], spec[1], spec[2], total, {mode, hasReach: !!m.reach});
       }).join('')
     : card('Melhor montaria · corrida', mountV, MOUNT_SPRINT, groupBySpecies(pool.filter(mountCounts)).length, {mode: 'sprint', hasReach: false});
-  return `<div class="verdict">
+  return baseSuggestionHtml(icon) + `<div class="verdict">
     ${card('Melhor para combate', combatV, 'Combate', groupBySpecies(pool, combatOf).length)}
     ${mountCards}
+  </div>
+  <div class="verdict compact">
     ${Object.entries(workByCat).map(([cat, v]) => card(workLabel(cat), v, 'Aptidão: ' + WORK_PT[cat], v.total)).join('')}
   </div>`;
+}
+
+let baseGoal = 'balanced', baseOpen = false, baseAll = true;   // baseAll: considera também o time e Pals já em bases
+try { const g = localStorage.getItem('paldexBaseGoal'); if (g) baseGoal = g; baseOpen = localStorage.getItem('paldexBaseOpen') === '1'; baseAll = localStorage.getItem('paldexBaseAll') !== '0'; } catch (e) {}
+
+// Por que o Pal foi sugerido (tooltip secundário, sobre a linha em negrito da métrica).
+function roleWhy(x, role, goal){
+  return {
+    head: `Sugerido para ${WORK_PT[role.cat]} — #${x.rank} de ${role.cands} Pals com a aptidão (${goal.label})`,
+    body: tipReason(x.p, workLabel(role.cat)) + `<br>Cada Pal ocupa uma vaga só: o melhor livre da aptidão entra no papel.`,
+  };
+}
+function pairWhy(p, mate, sex){
+  const r = p._real || {};
+  return {
+    head: `Casal reprodutor ${sex} — melhor genética de ${p.name}`,
+    body: `IVs HP/Atq/Def ${r.talentHp} / ${r.talentShot} / ${r.talentDefense} + 20 por passiva útil = ${geneScore(p)}<br>Par: o melhor ${sex === '♂' ? 'fêmea' : 'macho'} da espécie (${geneScore(mate)}).`,
+  };
+}
+
+function baseSuggestionHtml(icon){
+  const ids = Object.keys(BASE_GOALS);
+  if (!ids.length) return '';
+  if (!BASE_GOALS[baseGoal]) baseGoal = ids[0];
+  const { roles, pairs } = suggestBase(baseAll ? owned : owned.filter(p => !p._real || p._real.location === 'palbox'), baseGoal);
+  const goal = BASE_GOALS[baseGoal];
+  const total = roles.reduce((n, r) => n + r.pals.length, 0) + pairs.length * 2;
+  const pairRow = pairs.length ? `<div class="brow"><div class="brole" title="Fazenda de Criação: macho + fêmea da mesma espécie com os melhores IVs e passivas">💞 <small>${pairs.length}</small></div><div class="bpals">${pairs.map(c =>
+    `<span class="bpair">${icon(c.male, 'sm', geneScore(c.male), 'Reprodução ♂', pairWhy(c.male, c.female, '♂'))}<i>+</i>${icon(c.female, 'sm', geneScore(c.female), 'Reprodução ♀', pairWhy(c.female, c.male, '♀'))}</span>`).join('')}</div></div>` : '';
+  const rows = roles.map(r => `<div class="brow"><div class="brole" title="${WORK_PT[r.cat]}">${workIcon(r.cat)}<small>${r.pals.length}${r.pals.length < r.want ? '/' + r.want : ''}</small></div>
+    <div class="bpals">${r.pals.map(x => icon(x.p, 'sm', x.v, 'Aptidão: ' + WORK_PT[r.cat], roleWhy(x, r, goal))).join('')}</div></div>`).join('');
+  return `<details class="base-sug"${baseOpen ? ' open' : ''}>
+    <summary><span class="base-sug-title">🏠 Sugestão de base</span>
+      <select id="baseGoal" aria-label="Objetivo da base">${ids.map(id => `<option value="${id}"${id === baseGoal ? ' selected' : ''}>${BASE_GOALS[id].label}</option>`).join('')}</select>
+      <label class="base-sug-all" title="Ligado: usa também os Pals do time e das bases. Desligado: só os do Pal Box."><input type="checkbox" id="baseAll"${baseAll ? ' checked' : ''}> Time e bases</label>
+      <span class="base-sug-count">${total}/${BASE_SLOTS}</span></summary>
+    <div class="base-body">${rows || pairRow ? pairRow + rows : '<div class="empty">Sem Pals suficientes para este objetivo.</div>'}</div>
+  </details>`;
+}
+
+function setupBaseGoal(){
+  const box = document.querySelector('.base-sug');
+  const sel = document.getElementById('baseGoal');
+  if (!box || !sel) return;
+  sel.onclick = e => e.stopPropagation();   // o select vive no <summary>: não pode abrir/fechar a seção
+  sel.onchange = () => {
+    baseGoal = sel.value;
+    try { localStorage.setItem('paldexBaseGoal', baseGoal); } catch (e) {}
+    render();
+  };
+  const all = document.getElementById('baseAll');
+  all.onclick = e => e.stopPropagation();
+  all.onchange = () => {
+    baseAll = all.checked;
+    try { localStorage.setItem('paldexBaseAll', baseAll ? '1' : '0'); } catch (e) {}
+    render();
+  };
+  box.ontoggle = () => {
+    baseOpen = box.open;
+    try { localStorage.setItem('paldexBaseOpen', baseOpen ? '1' : '0'); } catch (e) {}
+  };
 }
 
 function setupMountSwitch(){
@@ -518,11 +640,12 @@ function render(){
   main.innerHTML = owned.length
     ? renderVerdict()
     : '<div class="empty">Nenhum Pal encontrado. O save do Palworld é lido automaticamente; se nada aparecer, use "Forçar".</div>';
+  setupBaseGoal();
   setupSpeedSwitch();   // depois do innerHTML: os botões vivem dentro dos cards
   renderChips();
   if (typeof document !== 'undefined') setupTooltips(document);
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { setPartnerSkills, bestOf, computeVerdict, setSpeciesData, setPalRules, setUnlockedTechs, saddleLocked, setPlayerLevel };
+  module.exports = { setPartnerSkills, bestOf, computeVerdict, setSpeciesData, setPalRules, setUnlockedTechs, saddleLocked, setPlayerLevel, suggestBase };
 }

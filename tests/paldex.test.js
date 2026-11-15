@@ -100,3 +100,29 @@ test('combat is compared at the player level: the Pal own level does not matter'
     assert.ok(star > low * 1.19 && star < low * 1.21);
   } finally { setPlayerLevel(null); }
 });
+
+test('suggestBase fills the main role first, never repeats a Pal and respects the slot limit', () => {
+  const { suggestBase } = require('../public/js/paldex.js');
+  const mk = (slug, work, extra = {}) => ({ name: slug, slug, work, workDisplay: work, _real: { level: 1, location: 'base-1', gender: 'Male', ...extra } });
+  const pals = [
+    mk('a', { Mining: 5, Transporting: 1 }), mk('b', { Mining: 3 }), mk('c', { Mining: 4, Handiwork: 2 }),
+    mk('d', { Transporting: 3 }), mk('e', { Lumbering: 4 }),
+  ];
+  const r = suggestBase(pals, 'mining', 4);
+  const all = r.roles.flatMap(x => x.pals.map(y => y.p));
+  assert.strictEqual(r.roles[0].cat, 'Mining');
+  assert.deepStrictEqual(r.roles[0].pals.map(x => x.p.slug), ['a', 'c', 'b']);
+  assert.strictEqual(new Set(all).size, all.length);
+  assert.ok(all.length <= 4);
+  assert.ok(!all.some(p => p.slug === 'e'));   // sem aptidão útil para o objetivo
+});
+
+test('suggestBase breeding reserves a male+female pair of the same species', () => {
+  const { suggestBase } = require('../public/js/paldex.js');
+  const mk = (slug, gender, tal) => ({ name: slug, slug, work: { Farming: 1 }, _real: { level: 1, location: 'team', gender, talentHp: tal, talentShot: tal, talentDefense: tal, passiveSkills: [] } });
+  const pals = [mk('x', 'Male', 90), mk('x', 'Male', 10), mk('x', 'Female', 80), mk('y', 'Male', 99)];
+  const r = suggestBase(pals, 'breeding');
+  assert.strictEqual(r.pairs.length, 1);
+  assert.strictEqual(r.pairs[0].male._real.talentHp, 90);
+  assert.strictEqual(r.pairs[0].female._real.gender, 'Female');
+});

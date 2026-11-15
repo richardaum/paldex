@@ -1,5 +1,20 @@
 {
   "_doc": "Regras e dados de Pals mantidos à mão (não vêm do save nem do species_seed). Consumido por public/js/paldex.js via setPalRules(). Slugs de montaria usam só o trecho antes do primeiro '-' (variantes herdam o tipo), exceto em mounts.overrides.",
+  "baseGoals": {
+    "_doc": "Objetivos da sugestão de base (15 vagas). quotas = [aptidão, vagas] na ordem dos papéis; scarceFirst = as aptidões mais raras escolhem primeiro. pairs = casais reprodutores (macho+fêmea) reservados antes das vagas de trabalho.",
+    "balanced": { "label": "Balanceado", "quotas": [["Kindling",1],["Watering",1],["Planting",1],["Generating Electricity",1],["Handiwork",2],["Gathering",1],["Lumbering",1],["Mining",1],["Medicine Production",1],["Cooling",1],["Transporting",2],["Farming",1],["Oil Extraction",1]], "scarceFirst": true },
+    "mining": { "label": "Mais garimpo", "quotas": [["Mining",8],["Transporting",3],["Handiwork",2],["Generating Electricity",1],["Gathering",1]] },
+    "lumber": { "label": "Mais madeira", "quotas": [["Lumbering",8],["Transporting",3],["Handiwork",2],["Planting",1],["Gathering",1]] },
+    "farm": { "label": "Mais fazenda", "quotas": [["Planting",4],["Watering",3],["Farming",3],["Gathering",2],["Transporting",3]] },
+    "construction": { "label": "Construção (pedra + madeira)", "quotas": [["Mining",5],["Lumbering",5],["Transporting",3],["Handiwork",2]] },
+    "energy": { "label": "Mais energia", "quotas": [["Generating Electricity",7],["Transporting",3],["Handiwork",2],["Cooling",2],["Gathering",1]] },
+    "forge": { "label": "Forja (fogo + minério)", "quotas": [["Kindling",5],["Mining",4],["Transporting",3],["Handiwork",2],["Cooling",1]] },
+    "medicine": { "label": "Mais medicina", "quotas": [["Medicine Production",6],["Planting",3],["Watering",2],["Gathering",2],["Transporting",2]] },
+    "oil": { "label": "Mais petróleo", "quotas": [["Oil Extraction",7],["Transporting",3],["Handiwork",2],["Generating Electricity",2],["Cooling",1]] },
+    "gathering": { "label": "Mais coleta (materiais)", "quotas": [["Gathering",8],["Transporting",4],["Lumbering",2],["Mining",1]] },
+    "food": { "label": "Mais comida", "quotas": [["Planting",4],["Watering",2],["Farming",3],["Kindling",3],["Gathering",1],["Transporting",2]] },
+    "breeding": { "label": "Breeding", "pairs": 3, "quotas": [["Farming",3],["Handiwork",3],["Planting",1],["Transporting",2]] }
+  },
   "elements": {
     "colors": {
       "Fire": "#ff6b4a",
