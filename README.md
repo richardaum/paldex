@@ -11,10 +11,16 @@ os melhores em combate, montaria (aérea, terrestre, aquática) e trabalho de ba
 ## Rodando (atalho no Windows)
 
 ```
-.un.ps1           # instala o que faltar e sobe API + frontend via pm2 → http://localhost:5173
+.un.ps1           # avalia o sistema, instala o que faltar, sobe API + frontend (pm2) → http://localhost:5173
+.un.ps1 -Check    # só avalia os pré-requisitos
 .un.ps1 -Dev      # sem pm2, tudo nesta janela
 .un.ps1 -Stop     # para  (também: -Logs, -Status)
 ```
+
+O script confere Python 3.10+, Node 18+, pip/npm, pm2, disco/memória, portas 5000/5173, se há
+save do Palworld e acesso ao CDN dos ícones. Instala as dependências (e o pm2, se faltar) e termina
+com um relatório `OK / WARN / FAIL` com a correção sugerida para cada item; os logs de instalação
+ficam em `data/install-*.log`. Sai com código 1 se algo falhou.
 
 ## Rodando (manual)
 
