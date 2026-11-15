@@ -61,7 +61,7 @@ def get_connection(db_path: str, seed_path: str = "species_seed.json") -> sqlite
     parent = os.path.dirname(db_path)
     if parent:
         os.makedirs(parent, exist_ok=True)
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(db_path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute(PALS_SCHEMA)
     conn.execute(SPECIES_SCHEMA)

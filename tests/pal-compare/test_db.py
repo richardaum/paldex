@@ -1,6 +1,7 @@
 import json
 import sqlite3
 import sys
+import threading
 sys.path.insert(0, "pal-compare")
 from db import get_connection, replace_all_pals, get_all_pals, get_all_species
 
@@ -64,3 +65,18 @@ def test_get_connection_does_not_reseed_species_on_second_open(tmp_path):
     seed_path.write_text(json.dumps(SPECIES_FIXTURE + SPECIES_FIXTURE))  # would be 2 if reseeded
     conn2 = get_connection(db_path, seed_path=str(seed_path))
     assert len(get_all_species(conn2)) == 1
+
+def test_connection_is_usable_from_a_different_thread(tmp_path):
+    # reproduces a real bug: Flask's dev server can handle each request on a
+    # different thread than the one that opened the sqlite connection
+    conn = get_connection(str(tmp_path / "cache.sqlite3"))
+    errors = []
+    def read_from_other_thread():
+        try:
+            get_all_pals(conn)
+        except Exception as e:
+            errors.append(e)
+    t = threading.Thread(target=read_from_other_thread)
+    t.start()
+    t.join()
+    assert errors == []

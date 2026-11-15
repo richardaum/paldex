@@ -20,12 +20,20 @@ function elementTags(p){
   return (p.elements||[]).map(e => `<span class="tag" style="border-color:${ELEMENT_COLOR[e]||'#555'};color:${ELEMENT_COLOR[e]||'#ccc'}">${e}</span>`).join(' ') || '<span class="dash">—</span>';
 }
 
+function locationLabel(location){
+  if (!location) return '';
+  if (location === 'team') return 'Time';
+  const m = /^base-(\d+)$/.exec(location);
+  return m ? `Base ${m[1]}` : location;
+}
+
 function renderChips(){
   const c = document.getElementById('chips');
   c.innerHTML = selected.map(p => `
     <span class="chip" data-slug="${p.slug}">
       <img src="${imgUrl(p)}" alt="">
       ${p.name}
+      ${p._real ? `<span class="tag loc-tag">${locationLabel(p._real.location)}</span>` : ''}
       <button data-remove="${p.slug}" title="Remover">✕</button>
     </span>`).join('');
   c.querySelectorAll('[data-remove]').forEach(btn => {
@@ -149,7 +157,7 @@ function renderTable(){
   const dropsRow = `<tr><td class="rowlabel">Drops</td>${selected.map(p=>`<td>${(p.drops||[]).join(', ')||'<span class="dash">—</span>'}</td>`).join('')}</tr>`;
 
   const baseTotalRow = statRow('Total de aptidão de base', p=>Object.values(p.work||{}).reduce((a,b)=>a+b,0));
-  const workRows = WORK_CATS.map(cat => statRow(cat, p => (p.work && p.work[cat]) || null)).join('');
+  const workRows = WORK_CATS.map(cat => statRow(cat, p => { const src = p.workDisplay || p.work; return (src && src[cat]) || null; })).join('');
 
   return `
   <div class="section-title">Visão geral</div>
