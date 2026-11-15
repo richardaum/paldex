@@ -115,8 +115,6 @@ def test_watcher_ignores_missing_save(tmp_path, monkeypatch):
     assert app.test_client().get("/api/status").get_json()["version"] == 0
 
 
-def test_serves_static_index(tmp_path):
+def test_flask_is_api_only(tmp_path):
     app = create_app(str(tmp_path / "cache.sqlite3"), seed_path=SEED_FIXTURE_PATH)
-    client = app.test_client()
-    resp = client.get("/")
-    assert resp.status_code == 200
+    assert app.test_client().get("/").status_code == 404

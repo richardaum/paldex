@@ -1,0 +1,604 @@
+{
+  "_doc": "Regras e dados de Pals mantidos à mão (não vêm do save nem do species_seed). Consumido por public/js/paldex.js via setPalRules(). Slugs de montaria usam só o trecho antes do primeiro '-' (variantes herdam o tipo), exceto em mounts.overrides.",
+  "elements": {
+    "colors": {
+      "Fire": "#ff6b4a",
+      "Water": "#4ab3ff",
+      "Grass": "#6ad66a",
+      "Electric": "#ffd24a",
+      "Ice": "#8fe3ff",
+      "Ground": "#c9975a",
+      "Dark": "#9b7bd6",
+      "Dragon": "#ff7bd6",
+      "Neutral": "#b8bec9"
+    },
+    "iconIndex": {
+      "Neutral": 0,
+      "Fire": 1,
+      "Water": 2,
+      "Electric": 3,
+      "Grass": 4,
+      "Dark": 5,
+      "Dragon": 6,
+      "Ground": 7,
+      "Ice": 8
+    }
+  },
+  "work": [
+    {
+      "id": "Kindling",
+      "pt": "Fogo",
+      "icon": 0
+    },
+    {
+      "id": "Watering",
+      "pt": "Rega",
+      "icon": 1
+    },
+    {
+      "id": "Planting",
+      "pt": "Plantio",
+      "icon": 2
+    },
+    {
+      "id": "Generating Electricity",
+      "pt": "Eletricidade",
+      "icon": 3
+    },
+    {
+      "id": "Handiwork",
+      "pt": "Manufatura",
+      "icon": 4
+    },
+    {
+      "id": "Gathering",
+      "pt": "Coleta",
+      "icon": 5
+    },
+    {
+      "id": "Lumbering",
+      "pt": "Lenhador",
+      "icon": 6
+    },
+    {
+      "id": "Mining",
+      "pt": "Mineração",
+      "icon": 7
+    },
+    {
+      "id": "Medicine Production",
+      "pt": "Medicina",
+      "icon": 8
+    },
+    {
+      "id": "Oil Extraction",
+      "pt": "Petróleo",
+      "icon": 9
+    },
+    {
+      "id": "Cooling",
+      "pt": "Resfriamento",
+      "icon": 10
+    },
+    {
+      "id": "Transporting",
+      "pt": "Transporte",
+      "icon": 11
+    },
+    {
+      "id": "Farming",
+      "pt": "Pecuária",
+      "icon": 12
+    }
+  ],
+  "mounts": {
+    "typeLabels": {
+      "air": "Melhor montaria aérea",
+      "land": "Melhor montaria terrestre",
+      "water": "Melhor montaria aquática"
+    },
+    "air": [
+      "beakon",
+      "celesdir",
+      "eidrolon",
+      "elphidran",
+      "hartalis",
+      "helzephyr",
+      "maraith",
+      "nitewing",
+      "quivern",
+      "ragnahawk",
+      "roujay",
+      "selyne",
+      "shadowbeak",
+      "shaolong",
+      "suzaku",
+      "vanwyrm",
+      "xenolord"
+    ],
+    "water": [
+      "azurobe",
+      "ghangler",
+      "jormuntide",
+      "neptilius",
+      "solmora",
+      "surfent",
+      "whalaska"
+    ],
+    "overrides": {
+      "faleris-aqua": "water"
+    },
+    "nonMounts": [
+      "foxparks"
+    ]
+  },
+  "passives": {
+    "_doc": "Entradas só com name não afetam os rankings (aparecem apenas no tooltip). Chave = ID da passiva no save. desc = linhas do efeito (texto do jogo, pt-BR) mostradas no popover; name = nome oficial pt-BR (localização do jogo, via paldb.cc/pt/PassiveSkills_Table); atk/def/work/move/swim = bônus em fração (0.2 = +20%; swim só vale na água e não entra nos rankings). Valores da paldb.",
+    "PAL_ALLAttack_up1": {
+      "name": "Ousado",
+      "atk": 0.1,
+      "desc": [
+        "Ataque +10%"
+      ]
+    },
+    "PAL_ALLAttack_up2": {
+      "name": "Brutal",
+      "atk": 0.2,
+      "desc": [
+        "Ataque +20%"
+      ]
+    },
+    "PAL_ALLAttack_down1": {
+      "name": "Medroso",
+      "atk": -0.1,
+      "desc": [
+        "Ataque -10%"
+      ]
+    },
+    "PAL_ALLAttack_down2": {
+      "name": "Pusilânime",
+      "atk": -0.2,
+      "desc": [
+        "Ataque -20%"
+      ]
+    },
+    "Deffence_up1": {
+      "name": "Casca grossa",
+      "def": 0.1,
+      "desc": [
+        "Defesa +10%"
+      ]
+    },
+    "Deffence_up2": {
+      "name": "Corpo Fechado",
+      "def": 0.2,
+      "desc": [
+        "Defesa +20%",
+        "Anula atordoamento"
+      ]
+    },
+    "Deffence_up2_2": {
+      "name": "Peso Pesado",
+      "def": 0.2,
+      "desc": [
+        "Defesa +20%",
+        "Anula lançamento para longe"
+      ]
+    },
+    "Deffence_down1": {
+      "name": "Delicado",
+      "def": -0.1,
+      "desc": [
+        "Defesa -10%"
+      ]
+    },
+    "Deffence_down2": {
+      "name": "Quebradiço",
+      "def": -0.2,
+      "desc": [
+        "Defesa -20%"
+      ]
+    },
+    "CraftSpeed_up1": {
+      "name": "Dedicado",
+      "work": 0.2,
+      "desc": [
+        "Velocidade de trabalho +20%"
+      ]
+    },
+    "CraftSpeed_up2": {
+      "name": "Espírito artesão",
+      "work": 0.5,
+      "desc": [
+        "Velocidade de trabalho +50%"
+      ]
+    },
+    "CraftSpeed_down1": {
+      "name": "Desajeitado",
+      "work": -0.1,
+      "desc": [
+        "Velocidade de trabalho -10%"
+      ]
+    },
+    "CraftSpeed_down2": {
+      "name": "Tendência ao ócio",
+      "work": -0.3,
+      "desc": [
+        "Velocidade de trabalho -30%"
+      ]
+    },
+    "MoveSpeed_up_1": {
+      "name": "Ligeiro",
+      "move": 0.1,
+      "desc": [
+        "Aumenta a velocidade de movimento em 10%."
+      ]
+    },
+    "MoveSpeed_up_2": {
+      "name": "Bom corredor",
+      "move": 0.2,
+      "desc": [
+        "Aumenta a velocidade de movimento em 20%."
+      ]
+    },
+    "Rare": {
+      "name": "Da sorte",
+      "atk": 0.15,
+      "def": 0.15,
+      "work": 0.2,
+      "desc": [
+        "Ataque +15%",
+        "Defesa +15%",
+        "Velocidade de trabalho +20%"
+      ]
+    },
+    "PAL_oraora": {
+      "name": "Confrontador",
+      "atk": 0.1,
+      "def": -0.1,
+      "desc": [
+        "Ataque +10%",
+        "Defesa -10%"
+      ]
+    },
+    "PAL_sadist": {
+      "name": "Sádico",
+      "atk": 0.15,
+      "def": -0.15,
+      "desc": [
+        "Ataque +15%",
+        "Defesa -15%"
+      ]
+    },
+    "PAL_masochist": {
+      "name": "Masoquista",
+      "atk": -0.15,
+      "def": 0.15,
+      "desc": [
+        "Defesa +15%",
+        "Ataque -15%"
+      ]
+    },
+    "PAL_rude": {
+      "name": "Violento",
+      "atk": 0.15,
+      "work": -0.1,
+      "desc": [
+        "Ataque +15%",
+        "Velocidade de trabalho -10%"
+      ]
+    },
+    "PAL_conceited": {
+      "name": "Presunçoso",
+      "atk": -0.1,
+      "work": 0.1,
+      "desc": [
+        "Velocidade de trabalho +10%",
+        "Defesa -10%"
+      ]
+    },
+    "PAL_CorporateSlave": {
+      "name": "Escravo do trabalho",
+      "atk": -0.3,
+      "work": 0.3,
+      "desc": [
+        "Velocidade de trabalho +30%",
+        "Ataque -30%"
+      ]
+    },
+    "SwimSpeed_up_1": {
+      "name": "Nado Gracioso",
+      "swim": 0.3,
+      "desc": [
+        "Aumenta a velocidade de movimento sobre a água em 30%."
+      ]
+    },
+    "SwimSpeed_up_2": {
+      "name": "Bom Nadador",
+      "swim": 0.4,
+      "desc": [
+        "Aumenta a velocidade de movimento sobre a água em 40%."
+      ]
+    },
+    "AutoHPRegeneRate_Passive": {
+      "name": "Terapeuta",
+      "desc": [
+        "Cura Automática de PV do Jogador +5%"
+      ]
+    },
+    "CoolTimeReduction_Down_1": {
+      "name": "Relaxado",
+      "desc": [
+        "Tempo de recarga de habilidades ativas aumentado em 15%"
+      ]
+    },
+    "CoolTimeReduction_Up_1": {
+      "name": "Sossegado",
+      "desc": [
+        "Tempo de recarga de habilidades ativas reduzido em 30%",
+        "Ataque +10%"
+      ]
+    },
+    "CoolTimeReduction_Up_2": {
+      "name": "Impaciente",
+      "desc": [
+        "Tempo de recarga de habilidades ativas reduzido em 15%"
+      ]
+    },
+    "ElementBoost_Aqua_1_PAL": {
+      "name": "Brincando com Água",
+      "desc": [
+        "Aumenta o dano de ataques de água em 10%."
+      ]
+    },
+    "ElementBoost_Dragon_1_PAL": {
+      "name": "Casta Dracônica",
+      "desc": [
+        "Aumenta o dano de ataques dracônicos em 10%."
+      ]
+    },
+    "ElementBoost_Earth_1_PAL": {
+      "name": "Força da Terra",
+      "desc": [
+        "Aumenta o dano de ataques de terra em 10%."
+      ]
+    },
+    "ElementBoost_Fire_1_PAL": {
+      "name": "Brincando com Fogo",
+      "desc": [
+        "Aumenta o dano de ataques de fogo em 10%."
+      ]
+    },
+    "ElementBoost_Ice_1_PAL": {
+      "name": "Sangue Frio",
+      "desc": [
+        "Aumenta o dano de ataques de gelo em 10%."
+      ]
+    },
+    "ElementBoost_Normal_1_PAL": {
+      "name": "Território do Nada",
+      "desc": [
+        "Aumenta o dano de ataques não elementais em 10%."
+      ]
+    },
+    "ElementBoost_Thunder_1_PAL": {
+      "name": "Capacitor",
+      "desc": [
+        "Aumenta o dano de ataques elétricos em 10%."
+      ]
+    },
+    "ElementResist_Dark_1_PAL": {
+      "name": "De Bem com a Vida",
+      "desc": [
+        "Reduz o dano por ataques de escuridão em 10%."
+      ]
+    },
+    "ElementResist_Dragon_1_PAL": {
+      "name": "Matador de Dragões",
+      "desc": [
+        "Reduz o dano por ataques dracônicos em 10%."
+      ]
+    },
+    "ElementResist_Earth_1_PAL": {
+      "name": "Reforço Antissísmico",
+      "desc": [
+        "Reduz o dano por ataques de terra em 10%."
+      ]
+    },
+    "ElementResist_Fire_1_PAL": {
+      "name": "Um Bom Bronzeado",
+      "desc": [
+        "Reduz o dano por ataques de fogo em 10%."
+      ]
+    },
+    "ElementResist_Ice_1_PAL": {
+      "name": "Corpo Quente",
+      "desc": [
+        "Reduz o dano por ataques de gelo em 10%."
+      ]
+    },
+    "ElementResist_Leaf_1_PAL": {
+      "name": "Efeito Herbicida",
+      "desc": [
+        "Reduz o dano por ataques de grama em 10%."
+      ]
+    },
+    "ElementResist_Normal_1_PAL": {
+      "name": "Anormal",
+      "desc": [
+        "Reduz o dano por ataques não elementais em 10%."
+      ]
+    },
+    "ElementResist_Thunder_1_PAL": {
+      "name": "Isolamento Elétrico",
+      "desc": [
+        "Reduz o dano por ataques elétricos em 10%."
+      ]
+    },
+    "NightOwl": {
+      "name": "Notivaguismo",
+      "desc": [
+        "Costuma dormir durante o dia, provavelmente por ficar de pé até tarde da noite."
+      ]
+    },
+    "Nocturnal": {
+      "name": "Insônia",
+      "desc": [
+        "Não dorme ao cair da noite, continuando a trabalhar."
+      ]
+    },
+    "NonKilling": {
+      "name": "Clemência",
+      "desc": [
+        "Não pode deixar os alvos de seus ataques com vida inferior a 1."
+      ]
+    },
+    "PAL_FullStomach_Down_1": {
+      "name": "Comedido",
+      "desc": [
+        "Manutenção de Fartura +10%"
+      ]
+    },
+    "PAL_FullStomach_Down_2": {
+      "name": "Mestre da Dieta",
+      "desc": [
+        "Manutenção de Fartura +15%"
+      ]
+    },
+    "PAL_FullStomach_Up_1": {
+      "name": "Comilão",
+      "desc": [
+        "Redução de Fartura +10%"
+      ]
+    },
+    "PAL_FullStomach_Up_2": {
+      "name": "Saco sem fundo",
+      "desc": [
+        "Redução de Fartura +15%"
+      ]
+    },
+    "PAL_Sanity_Down_1": {
+      "name": "Pensamento positivo",
+      "desc": [
+        "Manutenção de SAN +10%"
+      ]
+    },
+    "PAL_Sanity_Down_2": {
+      "name": "Viciado no trabalho",
+      "desc": [
+        "Manutenção de SAN +15%"
+      ]
+    },
+    "PAL_Sanity_Up_1": {
+      "name": "Mente instável",
+      "desc": [
+        "Redução de SAN +10%"
+      ]
+    },
+    "PAL_Sanity_Up_2": {
+      "name": "Tendência suicida",
+      "desc": [
+        "Redução de SAN +15%"
+      ]
+    },
+    "PlayerSP_DecreaseRate_Passive": {
+      "name": "Prevenção de Exaustão",
+      "desc": [
+        "Redução do Consumo de Fôlego do Jogador +5%"
+      ]
+    },
+    "ReloadSpeedUp_Passive": {
+      "name": "Mestre da Recarga",
+      "desc": [
+        "Velocidade de Recarga do Jogador +4%"
+      ]
+    },
+    "SalePrice_Down_1": {
+      "name": "Deplorável",
+      "desc": [
+        "Preço de venda piorado: -10%"
+      ]
+    },
+    "SalePrice_Up_1": {
+      "name": "Nobre",
+      "desc": [
+        "Preço de venda melhorado: +5%"
+      ]
+    },
+    "SalePrice_Up_2": {
+      "name": "Linhagem Distinta",
+      "desc": [
+        "Preço de venda melhorado: +3%"
+      ]
+    },
+    "SelfDeathAddItemDrop_up_2": {
+      "name": "Mentalidade Altruísta",
+      "desc": [
+        "Itens deixados por este Pal ao morrer +50%"
+      ]
+    },
+    "Stamina_Down_1": {
+      "name": "Enfurnado",
+      "desc": [
+        "Fôlego máximo -25%",
+        "Só funciona com Pals que servem de montaria"
+      ]
+    },
+    "Stamina_Up_1": {
+      "name": "Fôlego Interminável",
+      "desc": [
+        "Fôlego máximo +50%",
+        "Só funciona com Pals que servem de montaria"
+      ]
+    },
+    "Stamina_Up_2": {
+      "name": "Criança Serelepe",
+      "desc": [
+        "Fôlego máximo +25%",
+        "Só funciona com Pals que servem de montaria"
+      ]
+    },
+    "Test_PalEgg_HatchingSpeed_Up": {
+      "name": "Filantropo",
+      "desc": [
+        "Enquanto estiver em uma fazenda de acasalamento, a velocidade de produção de ovos é aumentada em 100%"
+      ]
+    },
+    "TrainerATK_UP_1": {
+      "name": "Comandante Intrépido",
+      "desc": [
+        "Aumenta seu ataque em 10%."
+      ]
+    },
+    "TrainerDEF_UP_1": {
+      "name": "Estrategista Inabalável",
+      "desc": [
+        "Aumenta sua defesa em 10%."
+      ]
+    },
+    "TrainerLogging_up1": {
+      "name": "Lenhador Líder",
+      "desc": [
+        "Aumenta sua eficiência ao cortar árvores em 25%."
+      ]
+    },
+    "TrainerMining_up1": {
+      "name": "Mineiro-Chefe",
+      "desc": [
+        "Aumenta sua eficiência de garimpo em 25%."
+      ]
+    },
+    "TrainerWorkSpeed_UP_1": {
+      "name": "Motivador",
+      "desc": [
+        "Aumenta sua velocidade de trabalho em 25%."
+      ]
+    },
+    "WorkSuitabilityAddRank_MonsterFarm_1": {
+      "name": "Jovem Pecuarista",
+      "desc": [
+        "Aptidão para trabalho de Fazenda +1"
+      ]
+    }
+  }
+}

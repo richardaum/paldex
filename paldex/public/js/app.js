@@ -4,10 +4,14 @@ const UNKNOWN_SPECIES_NUMERIC_FIELDS = [
 ];
 
 function mergeRealPalWithSpecies(realPal, speciesById) {
-  const species = speciesById[realPal.character_id];
+  // Alphas vêm no save como BOSS_<Id> (às vezes Boss_<Id>); o seed só tem a espécie base.
+  const isAlpha = /^boss_/i.test(realPal.character_id);
+  const baseId = isAlpha ? realPal.character_id.replace(/^boss_/i, '') : realPal.character_id;
+  const species = speciesById[realPal.character_id] || speciesById[baseId];
   let merged;
   if (species) {
     merged = { ...species };
+    if (isAlpha) merged._alpha = true;
   } else {
     merged = { name: realPal.character_id, slug: realPal.instance_id, elements: [], drops: [], work: {} };
     UNKNOWN_SPECIES_NUMERIC_FIELDS.forEach(field => { merged[field] = null; });
@@ -38,11 +42,15 @@ function mergeRealPalWithSpecies(realPal, speciesById) {
 
 if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', async () => {
-    const [speciesResp, palsResp, techsResp] = await Promise.all([
+    const [speciesResp, palsResp, techsResp, rulesResp, partnerResp] = await Promise.all([
       fetch('/api/species'),
       fetch('/api/pals'),
       fetch('/api/techs'),
+      fetch('/pal-rules.json'),
+      fetch('/partner-skills.json'),
     ]);
+    setPalRules(await rulesResp.json());
+    try { setPartnerSkills(await partnerResp.json()); } catch (e) { /* sem tradução: cai no nome em inglês */ }
     setUnlockedTechs(await techsResp.json());
     const species = await speciesResp.json();
     const realPals = await palsResp.json();

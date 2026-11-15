@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS species (
     workSpeed INTEGER,
     work TEXT,
     mountSpeed INTEGER,
+    mountRunSpeed INTEGER,
     partnerSkill TEXT,
     breedRank INTEGER,
     food INTEGER,
@@ -48,7 +49,7 @@ CREATE TABLE IF NOT EXISTS species (
 
 SPECIES_COLUMNS = [
     "id", "name", "slug", "dex", "elements", "hp", "attack", "defense",
-    "stamina", "workSpeed", "work", "mountSpeed", "partnerSkill",
+    "stamina", "workSpeed", "work", "mountSpeed", "mountRunSpeed", "partnerSkill",
     "breedRank", "food", "rarity", "drops", "nocturnal", "combat",
 ]
 
@@ -68,9 +69,22 @@ def get_connection(db_path: str, seed_path: str = "species_seed.json") -> sqlite
     conn.execute(PALS_SCHEMA)
     conn.execute(SPECIES_SCHEMA)
     conn.execute(TECHS_SCHEMA)
+    _migrate_species(conn, seed_path)
     conn.commit()
     _seed_species_if_empty(conn, seed_path)
     return conn
+
+
+def _migrate_species(conn: sqlite3.Connection, seed_path: str) -> None:
+    """Cache antigo sem mountRunSpeed: adiciona a coluna e preenche a partir do seed."""
+    cols = [r[1] for r in conn.execute("PRAGMA table_info(species)")]
+    if "mountRunSpeed" in cols:
+        return
+    conn.execute("ALTER TABLE species ADD COLUMN mountRunSpeed INTEGER")
+    if os.path.exists(seed_path):
+        with open(seed_path, encoding="utf-8") as f:
+            for sp in json.load(f):
+                conn.execute("UPDATE species SET mountRunSpeed=? WHERE id=?", (sp.get("mountRunSpeed"), sp["id"]))
 
 
 def _seed_species_if_empty(conn: sqlite3.Connection, seed_path: str) -> None:
@@ -86,7 +100,7 @@ def _seed_species_if_empty(conn: sqlite3.Connection, seed_path: str) -> None:
             species["id"], species["name"], species["slug"], species["dex"],
             json.dumps(species["elements"]), species["hp"], species["attack"],
             species["defense"], species["stamina"], species["workSpeed"],
-            json.dumps(species["work"]), species["mountSpeed"],
+            json.dumps(species["work"]), species["mountSpeed"], species.get("mountRunSpeed"),
             species["partnerSkill"], species["breedRank"], species["food"],
             species["rarity"], json.dumps(species["drops"]),
             int(bool(species["nocturnal"])), species["combat"],

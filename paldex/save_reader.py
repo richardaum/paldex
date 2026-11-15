@@ -79,7 +79,11 @@ def extract_pals(sav_path: "Path | None" = None) -> list[dict]:
     gvas_file = GvasFile.read(raw_gvas, PALWORLD_TYPE_HINTS, custom_properties, allow_nan=True)
     gvas_dict = json.loads(json.dumps(gvas_file.dump(), cls=CustomEncoder))
 
-    return extract_pals_from_gvas(gvas_dict)
+    try:
+        team_ids, box_ids = extract_player_container_ids(sav_path)
+    except Exception:
+        team_ids, box_ids = None, None
+    return extract_pals_from_gvas(gvas_dict, team_ids, box_ids)
 
 
 def _strip_enum(value: str) -> str:
@@ -100,7 +104,41 @@ def _enum_value(sp: dict, key: str, default: str) -> str:
     return _strip_enum(prop["value"]["value"])
 
 
-def extract_pals_from_gvas(gvas: dict) -> list[dict]:
+def player_container_ids_from_gvas(gvas: dict) -> "tuple[str | None, str | None]":
+    """(team, pal box) container IDs from a Players/<uid>.sav GVAS dict."""
+    save_data = gvas["properties"]["SaveData"]["value"]
+
+    def _id(key):
+        prop = save_data.get(key)
+        return prop["value"]["ID"]["value"] if prop else None
+
+    return _id("OtomoCharacterContainerId"), _id("PalStorageContainerId")
+
+
+def extract_player_container_ids(sav_path: "Path | None" = None) -> "tuple[set[str], set[str]]":
+    """Team and Pal Box container IDs of every player in the world (read-only)."""
+    import palworld_save_tools.archive
+    from palworld_save_tools.gvas import GvasFile
+    from palworld_save_tools.json_tools import CustomEncoder
+    from palworld_save_tools.paltypes import PALWORLD_TYPE_HINTS
+
+    sav_path = sav_path or find_latest_level_sav()
+    palworld_save_tools.archive.FArchiveReader.eof = lambda self: True
+    teams: set[str] = set()
+    boxes: set[str] = set()
+    for player_sav in sorted((Path(sav_path).parent / "Players").glob("*.sav")):
+        raw_gvas, _ = decompress_sav_to_gvas(player_sav.read_bytes())
+        gvas_file = GvasFile.read(raw_gvas, PALWORLD_TYPE_HINTS, {}, allow_nan=True)
+        gvas_dict = json.loads(json.dumps(gvas_file.dump(), cls=CustomEncoder))
+        team, box = player_container_ids_from_gvas(gvas_dict)
+        if team:
+            teams.add(team)
+        if box:
+            boxes.add(box)
+    return teams, boxes
+
+
+def extract_pals_from_gvas(gvas: dict, team_ids=None, box_ids=None) -> list[dict]:
     world = gvas["properties"]["worldSaveData"]["value"]
     containers = world["CharacterContainerSaveData"]["value"]
     char_entries = world["CharacterSaveParameterMap"]["value"]
@@ -119,11 +157,16 @@ def extract_pals_from_gvas(gvas: dict) -> list[dict]:
             if instance_id != ZERO_GUID:
                 instance_to_container[instance_id] = container_id
 
+    team_ids = set(team_ids or ())
+    box_ids = set(box_ids or ())
+    known = bool(team_ids or box_ids)
+
     team_container_id = None
-    for container_id, count in container_slot_counts.items():
-        if count == TEAM_SIZE:
-            team_container_id = container_id
-            break
+    if not known:
+        for container_id, count in container_slot_counts.items():
+            if count == TEAM_SIZE:
+                team_container_id = container_id
+                break
 
     # The Pal Box is the largest non-team container, but only when there is
     # at least one other non-team container to compare it against -- a
@@ -134,14 +177,14 @@ def extract_pals_from_gvas(gvas: dict) -> list[dict]:
         if cid != team_container_id and count > 0
     }
     box_container_id = None
-    if len(non_team_counts) > 1:
+    if not known and len(non_team_counts) > 1:
         box_container_id = max(non_team_counts, key=non_team_counts.get)
 
     base_labels: dict[str, str] = {}
     base_count = 0
     for container in containers:
         container_id = container["key"]["ID"]["value"]
-        if container_id in (box_container_id, team_container_id):
+        if container_id in (box_container_id, team_container_id) or container_id in team_ids | box_ids:
             continue
         if container_slot_counts[container_id] == 0:
             continue
@@ -157,9 +200,9 @@ def extract_pals_from_gvas(gvas: dict) -> list[dict]:
         container_id = instance_to_container.get(instance_id)
         if container_id is None:
             continue
-        if container_id == team_container_id:
+        if container_id == team_container_id or container_id in team_ids:
             location = "team"
-        elif container_id == box_container_id:
+        elif container_id == box_container_id or container_id in box_ids:
             location = "palbox"
         else:
             location = base_labels[container_id]

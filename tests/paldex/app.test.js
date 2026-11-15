@@ -22,6 +22,19 @@ test('merges a known real pal with its species stats', () => {
   assert.strictEqual(merged.work.Kindling, 3);
 });
 
+test('alpha (BOSS_/Boss_) character_id resolves to the base species', () => {
+  for (const id of ['BOSS_FlameBuffalo', 'Boss_FlameBuffalo']) {
+    const real = { instance_id: 'p3', character_id: id, nickname: '', level: 30, rank: 1,
+                   gender: 'Male', friendship: 0, talent_hp: 1, talent_shot: 1,
+                   talent_defense: 1, passive_skills: [], work_bonus: {}, location: 'team' };
+    const merged = mergeRealPalWithSpecies(real, SPECIES_BY_ID);
+    assert.strictEqual(merged.name, 'Arsox');
+    assert.strictEqual(merged.hp, 85);
+    assert.strictEqual(merged._unknownSpecies, undefined);
+    assert.strictEqual(merged._alpha, true);
+  }
+});
+
 test('unknown species falls back to raw character_id without crashing', () => {
   const real = { instance_id: 'p2', character_id: 'SomeFutureDlcPal', nickname: '',
                  level: 1, rank: 1, gender: 'Male', friendship: 0, talent_hp: 1,

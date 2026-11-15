@@ -19,7 +19,7 @@ def stat_level_sav():
 
 
 def create_app(db_path: str = "data/cache.sqlite3", seed_path: str = "species_seed.json") -> Flask:
-    app = Flask(__name__, static_folder="public", static_url_path="")
+    app = Flask(__name__, static_folder=None)  # só API; o frontend é servido pelo Vite (5173)
     conn = get_connection(db_path, seed_path=seed_path)
     app.config["DB_CONN"] = conn
 
@@ -65,10 +65,6 @@ def create_app(db_path: str = "data/cache.sqlite3", seed_path: str = "species_se
         watch["seen"] = sig
 
     app.config["POLL_SAVE"] = poll_save
-
-    @app.route("/")
-    def index():
-        return app.send_static_file("index.html")
 
     @app.route("/api/species")
     def api_species():

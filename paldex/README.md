@@ -10,7 +10,19 @@ pip install -r requirements.txt
 python server.py
 ```
 
-Abra `http://localhost:5000`.
+Isso sobe só a API (porta 5000, sem frontend). Para a interface, rode o Vite abaixo.
+
+### Frontend (Vite)
+
+Com o Flask rodando, em outro terminal:
+
+```
+npm install
+npm run dev
+```
+
+Abra `http://localhost:5173`. CSS atualiza via HMR; mudanças em JS/HTML recarregam a página.
+`/api` é encaminhado para o Flask na porta 5000.
 
 ## Rodar com autorestart (pm2)
 
