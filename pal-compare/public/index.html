@@ -1,5 +1,43 @@
 <!doctype html>
-<html>
-<head><meta charset="utf-8"><title>Comparador de Pals</title></head>
-<body>placeholder — Task 5 replaces this with the real comparator page</body>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comparador de Pals — Palworld</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header>
+  <h1>Comparador de Pals</h1>
+  <div class="sub">Compare qualquer quantidade de Pals lado a lado: combate, montaria, trabalhos de base e stats brutos. Dados extraídos do jogo (via paldb.gg), base stats no nível 1.</div>
+</header>
+
+<div class="toolbar">
+  <div class="pal-picker">
+    <button id="addBtn">+ Adicionar Pal</button>
+    <div class="pal-dropdown" id="dropdown">
+      <div class="search"><input type="text" id="searchInput" placeholder="Buscar Pal..."></div>
+      <div id="palList"></div>
+    </div>
+  </div>
+  <div id="chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+  <select id="sortSelect">
+    <option value="name">Ordenar: Nome</option>
+    <option value="combat">Ordenar: Combate</option>
+    <option value="base">Ordenar: Trabalho de base</option>
+    <option value="mount">Ordenar: Montaria</option>
+  </select>
+</div>
+
+<main id="main">
+  <div class="empty">Adicione pelo menos 2 Pals para comparar.</div>
+</main>
+
+<footer>
+  Combate = ataque + (vida ÷ 2) + (defesa ÷ 2). Montaria = velocidade de sela (só quem tem sela nos arquivos). Trabalho de base = soma de todos os níveis de aptidão de trabalho. Stats são base, nível 1, sem passivas. Fonte dos dados: paldb.gg.
+</footer>
+
+<script src="js/compare.js"></script>
+</body>
 </html>
