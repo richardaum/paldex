@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python 3.12 + Flask (new dependency) + stdlib `sqlite3` + `palworld-save-tools` 0.24.0 + `pyooz` 0.0.8 (both already installed `--user` on this machine) for the backend; plain ES5/ES6 browser JS for the frontend, with Node's built-in `node:test` runner used only at dev time to unit-test the pure JS logic (Node is not a runtime dependency of the shipped app).
 
-**Spec:** `C:\Users\richa\palworld\docs-pal-compare-design.md`
+**Spec:** `docs-pal-compare-design.md`
 
 ## Global Constraints
 
@@ -22,7 +22,7 @@
 - Real work suitability shown per category = species base level (from the `species` table) + sum of matching `{WorkSuitability, Rank}` entries in that pal's `GotWorkSuitabilityAddRankList` (default 0 when the list is empty or the category isn't present).
 - `requirements.txt` pins: `flask==3.1.3`, `palworld-save-tools==0.24.0`, `pyooz==0.0.8`.
 - `data/cache.sqlite3` is gitignored (it's a local cache: both `species` and `pals` tables are reconstructible — `species` from `species_seed.json`, `pals` from `/api/resync` — so losing the file costs nothing but a reseed/resync).
-- `C:\Users\richa\palworld\pal-compare.html` and the once-deleted `pals-data.json` are source material only — the 288-species JSON array they contain must end up solely in `pal-compare/species_seed.json` (committed to git, since it's static reference data, not user data), and the old root-level `pal-compare.html` must be removed once migrated (not left duplicated).
+- `pal-compare.html` and the once-deleted `pals-data.json` are source material only — the 288-species JSON array they contain must end up solely in `pal-compare/species_seed.json` (committed to git, since it's static reference data, not user data), and the old root-level `pal-compare.html` must be removed once migrated (not left duplicated).
 - The `species` table is seeded lazily: whenever `db.get_connection` opens a database whose `species` table is empty, it loads `species_seed.json` and inserts all 288 rows before returning the connection. This makes SQLite the one cache for everything, per this change: deleting `data/cache.sqlite3` and restarting the server fully rebuilds both tables (species from the seed file, pals on the next `/api/resync`).
 
 ## Review Focus
@@ -63,7 +63,7 @@ tests/
     app.test.js
 ```
 
-(Python tests run with `pytest` from `C:\Users\richa\palworld`; JS tests run with `node --test tests/pal-compare/*.test.js`.)
+(Python tests run with `pytest` from the repo root; JS tests run with `node --test tests/pal-compare/*.test.js`.)
 
 ---
 

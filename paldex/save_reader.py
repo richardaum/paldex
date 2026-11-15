@@ -45,15 +45,37 @@ def decompress_sav_to_gvas(data: bytes) -> "tuple[bytes, int]":
     raise Exception(f"unknown magic bytes: {magic_bytes!r}")
 
 
-def find_latest_level_sav() -> Path:
-    root = Path(os.environ["LOCALAPPDATA"]) / "Pal" / "Saved" / "SaveGames"
-    candidates = [
-        p for p in root.glob("**/Level.sav")
-        if "backup" not in p.parts
-    ] if root.exists() else []
+def save_root() -> Path:
+    """Pasta SaveGames. PALDEX_SAVE_DIR sobrescreve (outro SO, servidor dedicado, cópia do save)."""
+    env = os.environ.get("PALDEX_SAVE_DIR")
+    if env:
+        return Path(env)
+    if os.environ.get("LOCALAPPDATA"):
+        return Path(os.environ["LOCALAPPDATA"]) / "Pal" / "Saved" / "SaveGames"
+    return Path.home() / ".config" / "Epic" / "Pal" / "Saved" / "SaveGames"
+
+
+def list_level_savs() -> "list[Path]":
+    """Todos os Level.sav (sem backups), do mais recente para o mais antigo. Somente leitura."""
+    root = save_root()
+    found = [p for p in root.glob("**/Level.sav") if "backup" not in p.parts] if root.exists() else []
+    return sorted(found, key=lambda p: p.stat().st_mtime, reverse=True)
+
+
+def save_id(path: Path) -> str:
+    """Identificador estável de um save: caminho relativo à pasta SaveGames, com '/'."""
+    return path.relative_to(save_root()).as_posix()
+
+
+def find_latest_level_sav(selected_id: "str | None" = None) -> Path:
+    candidates = list_level_savs()
+    if selected_id:
+        for p in candidates:
+            if save_id(p) == selected_id:
+                return p
     if not candidates:
         raise FileNotFoundError("no Level.sav found")
-    return max(candidates, key=lambda p: p.stat().st_mtime)
+    return candidates[0]
 
 
 def extract_pals(sav_path: "Path | None" = None) -> list[dict]:

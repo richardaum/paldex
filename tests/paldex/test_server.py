@@ -118,3 +118,25 @@ def test_watcher_ignores_missing_save(tmp_path, monkeypatch):
 def test_flask_is_api_only(tmp_path):
     app = create_app(str(tmp_path / "cache.sqlite3"), seed_path=SEED_FIXTURE_PATH)
     assert app.test_client().get("/").status_code == 404
+
+
+def test_saves_endpoint_and_select(tmp_path, monkeypatch):
+    root = tmp_path / "SaveGames"
+    for name, t in (("u1/worldA", 100), ("u1/worldB", 200)):
+        d = root / name
+        d.mkdir(parents=True)
+        (d / "Level.sav").write_bytes(b"x")
+        import os; os.utime(d / "Level.sav", (t, t))
+    monkeypatch.setenv("PALDEX_SAVE_DIR", str(root))
+    calls = []
+    monkeypatch.setattr("server.extract_pals", lambda *a: calls.append(a) or [FAKE_PAL])
+    monkeypatch.setattr("server.extract_unlocked_techs", lambda *a: [])
+    app = create_app(str(tmp_path / "c.sqlite3"))
+    c = app.test_client()
+    data = c.get("/api/saves").get_json()
+    assert [s["id"] for s in data["saves"]] == ["u1/worldB/Level.sav", "u1/worldA/Level.sav"]
+    assert data["selected"] == "u1/worldB/Level.sav"
+    assert c.post("/api/save", json={"id": "../../etc/passwd"}).status_code == 404
+    assert c.post("/api/save", json={"id": "u1/worldA/Level.sav"}).status_code == 200
+    assert c.get("/api/saves").get_json()["selected"] == "u1/worldA/Level.sav"
+    assert calls and calls[-1][0].parent.name == "worldA"

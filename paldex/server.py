@@ -1,18 +1,27 @@
 import threading
 import time
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 
 from db import get_connection, replace_all_pals, get_all_pals, get_all_species, replace_all_techs, get_all_techs
-from save_reader import extract_pals, extract_unlocked_techs, find_latest_level_sav
+from save_reader import extract_pals, extract_unlocked_techs, find_latest_level_sav, list_level_savs, save_id
 
 POLL_INTERVAL_SECONDS = 3
 
 
+# Save escolhido na UI (id relativo a SaveGames); None = o mais recente. Só os ids listados por
+# list_level_savs() são aceitos, então a UI nunca aponta para um caminho arbitrário.
+selected = {"id": None}
+
+
+def current_sav():
+    return find_latest_level_sav(selected["id"])
+
+
 def stat_level_sav():
-    """(mtime, size) of the newest Level.sav, or None if there is no save. Read-only."""
+    """(mtime, size) of the selected (or newest) Level.sav, or None if there is no save. Read-only."""
     try:
-        st = find_latest_level_sav().stat()
+        st = current_sav().stat()
     except (FileNotFoundError, OSError):
         return None
     return (st.st_mtime, st.st_size)
@@ -20,6 +29,7 @@ def stat_level_sav():
 
 def create_app(db_path: str = "data/cache.sqlite3", seed_path: str = "species_seed.json") -> Flask:
     app = Flask(__name__, static_folder=None)  # só API; o frontend é servido pelo Vite (5173)
+    selected["id"] = None
     conn = get_connection(db_path, seed_path=seed_path)
     app.config["DB_CONN"] = conn
 
@@ -32,7 +42,8 @@ def create_app(db_path: str = "data/cache.sqlite3", seed_path: str = "species_se
         On any other failure the previous cache is kept and the error is recorded."""
         with lock:
             try:
-                pals = extract_pals()
+                sav = (current_sav(),) if selected["id"] else ()
+                pals = extract_pals(*sav)
             except FileNotFoundError:
                 raise
             except Exception as e:
@@ -40,7 +51,7 @@ def create_app(db_path: str = "data/cache.sqlite3", seed_path: str = "species_se
                 return None
             replace_all_pals(conn, pals)
             try:
-                replace_all_techs(conn, extract_unlocked_techs())
+                replace_all_techs(conn, extract_unlocked_techs(*sav))
             except Exception:
                 pass  # techs only drive the optional "saddle locked" indicator
             status["version"] += 1
@@ -81,6 +92,27 @@ def create_app(db_path: str = "data/cache.sqlite3", seed_path: str = "species_se
     @app.route("/api/status")
     def api_status():
         return jsonify(status)
+
+    @app.route("/api/saves")
+    def api_saves():
+        try:
+            current = save_id(current_sav())
+        except FileNotFoundError:
+            current = None
+        return jsonify({"selected": current, "saves": [
+            {"id": save_id(p), "mtime": p.stat().st_mtime} for p in list_level_savs()]})
+
+    @app.route("/api/save", methods=["POST"])
+    def api_select_save():
+        sid = (request.get_json(silent=True) or {}).get("id")
+        if sid not in {save_id(p) for p in list_level_savs()}:
+            return jsonify({"error": "save desconhecido"}), 404
+        selected["id"] = sid
+        pals = sync_now()
+        if pals is None:
+            return jsonify({"error": status["error"]}), 500
+        watch["synced"] = stat_level_sav()
+        return jsonify(pals)
 
     @app.route("/api/resync", methods=["POST"])
     def api_resync():

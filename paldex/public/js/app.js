@@ -92,6 +92,31 @@ if (typeof document !== 'undefined') {
       }
     }
 
+    // Dropdown de saves: só aparece com 2+ mundos. A escolha fica no localStorage e é reaplicada ao abrir.
+    const saveSelect = document.getElementById('saveSelect');
+    async function loadSaves() {
+      if (!saveSelect) return;
+      try {
+        const { selected, saves } = await (await fetch('/api/saves')).json();
+        saveSelect.innerHTML = saves.map(s =>
+          `<option value="${s.id}">${s.id.replace(/\/Level\.sav$/, '')} · ${new Date(s.mtime * 1000).toLocaleString('pt-BR')}</option>`).join('');
+        saveSelect.style.display = saves.length > 1 ? '' : 'none';
+        let want = selected;
+        try { const k = localStorage.getItem('paldexSave'); if (k && saves.some(s => s.id === k)) want = k; } catch (e) {}
+        if (want) saveSelect.value = want;
+        if (want && want !== selected) await chooseSave(want);
+      } catch (e) {}
+    }
+    async function chooseSave(id) {
+      const resp = await fetch('/api/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+      if (resp.ok) { await reloadPals(); pollStatus(); }
+    }
+    if (saveSelect) saveSelect.onchange = () => {
+      try { localStorage.setItem('paldexSave', saveSelect.value); } catch (e) {}
+      chooseSave(saveSelect.value);
+    };
+    loadSaves();
+
     pollStatus();
     setInterval(pollStatus, 5000);
 
