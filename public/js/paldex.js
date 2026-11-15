@@ -415,7 +415,7 @@ function renderVerdict(){
     tipPals.push({p, v, metric, why});
     const locked = /^(Velocidade de montaria|Alcance)/.test(metric || '') && saddleLocked(p);
     if (locked) tipPals[tipPals.length-1].locked = true;
-    return `<span class="picon ${cls}${locked ? ' locked' : ''}" data-tip="${tipPals.length-1}">${p._alpha ? ALPHA_BADGE : ''}${locked ? '<em class="nosaddle" title="Sela não desbloqueada">🚫</em>' : ''}${p._count ? `<em class="dupe" title="${p._count} cópias">×${p._count}</em>` : ''}<img src="${imgUrl(p)}" alt="${p.name}" loading="lazy">${cls==='sm' && v!=null ? `<b>${fmt(v)}</b>` : ''}</span>`;
+    return `<span class="picon ${cls}${locked ? ' locked' : ''}" data-tip="${tipPals.length-1}">${p._alpha ? ALPHA_BADGE : ''}${locked ? '<em class="nosaddle" title="Sela não desbloqueada">🚫</em>' : ''}${p._count ? `<em class="dupe" title="${p._count} cópias">×${p._count}</em>` : ''}<img src="${imgUrl(p)}" alt="${p.name}" loading="lazy">${(cls==='sm' || cls==='lg') && v!=null ? `<b>${fmt(v)}</b>` : ''}</span>`;
   };
   // Switcher corrida/normal/alcance dentro do card de montaria; o estado (speedMode) é global e vale para todos os cards.
   const speedToggle = (mode, hasReach) => `<div class="speed-seg" role="group" aria-label="Critério de montaria">`
