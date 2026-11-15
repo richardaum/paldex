@@ -150,3 +150,33 @@ def test_saves_include_world_name(tmp_path, monkeypatch):
     monkeypatch.setattr("server.read_world_name", lambda p: "Meu Mundo")
     c = create_app(str(tmp_path / "c.sqlite3")).test_client()
     assert c.get("/api/saves").get_json()["saves"][0]["name"] == "Meu Mundo"
+
+
+def _fake_git(local, remote, ancestor):
+    def git(*args):
+        if args[0] == "rev-parse": return 0, local
+        if args[0] == "ls-remote": return 0, f"{remote}	refs/heads/master"
+        if args[0] == "merge-base": return (0 if ancestor else 1), ""
+        if args[0] == "remote": return 0, "git@github.com:x/y.git"
+        return 1, ""
+    return git
+
+
+def test_check_update_reports_newer_remote():
+    from update_check import check_update
+    r = check_update(_fake_git("a" * 40, "b" * 40, ancestor=False))
+    assert r["available"] and r["remote"] == "bbbbbbb" and r["local"] == "aaaaaaa"
+
+
+def test_check_update_quiet_when_same_ahead_or_failing():
+    from update_check import check_update
+    assert not check_update(_fake_git("a" * 40, "a" * 40, False))["available"]
+    assert not check_update(_fake_git("a" * 40, "b" * 40, ancestor=True))["available"]   # local à frente
+    def boom(*a): raise OSError("sem git")
+    assert not check_update(boom)["available"]
+
+
+def test_api_update_endpoint(tmp_path, monkeypatch):
+    monkeypatch.setattr("server.check_update", lambda: {"available": True, "local": "a", "remote": "b", "url": "u"})
+    client = create_app(str(tmp_path / "c.sqlite3"), seed_path=SEED_FIXTURE_PATH).test_client()
+    assert client.get("/api/update").get_json()["available"] is True

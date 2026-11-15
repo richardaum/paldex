@@ -120,6 +120,18 @@ if (typeof document !== 'undefined') {
     };
     loadSaves();
 
+    // Banner: há commits mais novos no GitHub (o servidor compara o HEAD local com o remoto).
+    (async () => {
+      try {
+        const u = await (await fetch('/api/update')).json();
+        const bar = document.getElementById('updateBanner');
+        if (!u.available || !bar) return;
+        bar.innerHTML = `⬆️ Há uma versão mais recente no GitHub (<code>${u.local}</code> → <code>${u.remote}</code>). Rode <code>git pull</code> para atualizar. <button type="button" aria-label="Fechar">×</button>`;
+        bar.hidden = false;
+        bar.querySelector('button').onclick = () => { bar.hidden = true; };
+      } catch (e) { /* sem rede/servidor: sem aviso */ }
+    })();
+
     pollStatus();
     setInterval(pollStatus, 5000);
 

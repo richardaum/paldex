@@ -4,9 +4,11 @@ import time
 from flask import Flask, jsonify, request
 
 from db import get_connection, replace_all_pals, get_all_pals, get_all_species, replace_all_techs, get_all_techs
+from update_check import check_update
 from save_reader import extract_pals, extract_unlocked_techs, find_latest_level_sav, list_level_savs, read_world_name, save_id
 
 POLL_INTERVAL_SECONDS = 3
+UPDATE_CACHE_SECONDS = 600
 
 
 # Save escolhido na UI (id relativo a SaveGames); None = o mais recente. Só os ids listados por
@@ -93,6 +95,16 @@ def create_app(db_path: str = "data/cache.sqlite3", seed_path: str = "species_se
     @app.route("/api/status")
     def api_status():
         return jsonify(status)
+
+    update = {"at": 0.0, "value": {"available": False}}
+
+    @app.route("/api/update")
+    def api_update():
+        # git ls-remote vai à rede: guarda o resultado por 10 min
+        if time.time() - update["at"] > UPDATE_CACHE_SECONDS:
+            update["value"] = check_update()
+            update["at"] = time.time()
+        return jsonify(update["value"])
 
     @app.route("/api/saves")
     def api_saves():

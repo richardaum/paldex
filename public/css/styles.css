@@ -154,3 +154,7 @@
 .base-sug-all{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);cursor:pointer;margin-left:auto}
 .base-sug-all+.base-sug-count{margin-left:0}
 .sec-title{font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:0 0 6px 2px}
+.update-banner{flex:none;display:flex;align-items:center;gap:8px;padding:8px 24px;background:rgba(79,140,255,.14);border-bottom:1px solid var(--accent);font-size:13px}
+.update-banner[hidden]{display:none}
+.update-banner code{background:var(--panel2);padding:1px 5px;border-radius:5px}
+.update-banner button{margin-left:auto;padding:0 8px;font-size:16px;line-height:1.4}
