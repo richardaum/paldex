@@ -63,7 +63,7 @@ tests/
     app.test.js
 ```
 
-(Python tests run with `pytest` from the repo root; JS tests run with `node --test tests/pal-compare/*.test.js`.)
+(Python tests run with `pytest` from the repo root; JS tests run with `node --test tests/*.test.js`.)
 
 ---
 
@@ -689,7 +689,7 @@ Cover: prerequisites (`pip install -r requirements.txt`), how to run (`python se
 
 - [ ] **Step 3: Run the full automated suite**
 
-Run: `pytest tests/pal-compare -v && node --test tests/pal-compare/*.test.js`
+Run: `pytest tests/pal-compare -v && node --test tests/*.test.js`
 Expected: every test from Tasks 1–6 passes.
 
 - [ ] **Step 4: Manual end-to-end smoke test**

@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { bestOf, computeVerdict, setSpeciesData, setPalRules } = require('../../paldex/public/js/paldex.js');
-setPalRules(require('../../paldex/public/pal-rules.json'));
+const { bestOf, computeVerdict, setSpeciesData, setPalRules } = require('../public/js/paldex.js');
+setPalRules(require('../public/pal-rules.json'));
 
 const ARSOX = { id: 'FlameBuffalo', name: 'Arsox', slug: 'arsox', hp: 85, attack: 100,
                  defense: 95, stamina: 120, mountSpeed: 1050, work: { Kindling: 3, Lumbering: 2 },

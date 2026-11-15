@@ -99,7 +99,7 @@ if (typeof document !== 'undefined') {
       try {
         const { selected, saves } = await (await fetch('/api/saves')).json();
         saveSelect.innerHTML = saves.map(s =>
-          `<option value="${s.id}">${s.id.replace(/\/Level\.sav$/, '')} · ${new Date(s.mtime * 1000).toLocaleString('pt-BR')}</option>`).join('');
+          `<option value="${s.id}">${s.name || s.id.replace(/\/Level\.sav$/, '')} · ${new Date(s.mtime * 1000).toLocaleString('pt-BR')}</option>`).join('');
         saveSelect.style.display = saves.length > 1 ? '' : 'none';
         let want = selected;
         try { const k = localStorage.getItem('paldexSave'); if (k && saves.some(s => s.id === k)) want = k; } catch (e) {}

@@ -78,6 +78,20 @@ def find_latest_level_sav(selected_id: "str | None" = None) -> Path:
     return candidates[0]
 
 
+def read_world_name(level_sav: Path) -> "str | None":
+    """Nome do mundo (WorldName) do LevelMeta.sav ao lado do Level.sav; None se indisponível. Somente leitura."""
+    try:
+        from palworld_save_tools.gvas import GvasFile
+        from palworld_save_tools.json_tools import CustomEncoder
+        from palworld_save_tools.paltypes import PALWORLD_TYPE_HINTS
+        raw, _ = decompress_sav_to_gvas((level_sav.parent / "LevelMeta.sav").read_bytes())
+        gvas = GvasFile.read(raw, PALWORLD_TYPE_HINTS, {}, allow_nan=True)
+        data = json.loads(json.dumps(gvas.dump(), cls=CustomEncoder))
+        return data["properties"]["SaveData"]["value"]["WorldName"]["value"] or None
+    except Exception:
+        return None
+
+
 def extract_pals(sav_path: "Path | None" = None) -> list[dict]:
     sav_path = sav_path or find_latest_level_sav()
 

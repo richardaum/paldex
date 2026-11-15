@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { mergeRealPalWithSpecies } = require('../../paldex/public/js/app.js');
+const { mergeRealPalWithSpecies } = require('../public/js/app.js');
 
 const SPECIES_BY_ID = {
   FlameBuffalo: { id: 'FlameBuffalo', name: 'Arsox', slug: 'arsox', hp: 85, attack: 100,

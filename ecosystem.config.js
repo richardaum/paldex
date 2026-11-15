@@ -1,4 +1,4 @@
-// pm2: `pm2 start ecosystem.config.js` (dentro de paldex/)
+// pm2: `pm2 start ecosystem.config.js`
 // Útil: pm2 logs paldex | pm2 restart paldex | pm2 stop paldex | pm2 save
 module.exports = {
   apps: [

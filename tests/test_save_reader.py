@@ -5,7 +5,7 @@ import time
 import zlib
 from pathlib import Path
 
-sys.path.insert(0, "paldex")
+sys.path.insert(0, ".")
 from save_reader import extract_pals_from_gvas, decompress_sav_to_gvas, find_latest_level_sav, extract_pals
 
 def _enum(v):

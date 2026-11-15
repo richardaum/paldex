@@ -4,7 +4,7 @@ import time
 from flask import Flask, jsonify, request
 
 from db import get_connection, replace_all_pals, get_all_pals, get_all_species, replace_all_techs, get_all_techs
-from save_reader import extract_pals, extract_unlocked_techs, find_latest_level_sav, list_level_savs, save_id
+from save_reader import extract_pals, extract_unlocked_techs, find_latest_level_sav, list_level_savs, read_world_name, save_id
 
 POLL_INTERVAL_SECONDS = 3
 
@@ -100,7 +100,7 @@ def create_app(db_path: str = "data/cache.sqlite3", seed_path: str = "species_se
         except FileNotFoundError:
             current = None
         return jsonify({"selected": current, "saves": [
-            {"id": save_id(p), "mtime": p.stat().st_mtime} for p in list_level_savs()]})
+            {"id": save_id(p), "name": read_world_name(p), "mtime": p.stat().st_mtime} for p in list_level_savs()]})
 
     @app.route("/api/save", methods=["POST"])
     def api_select_save():

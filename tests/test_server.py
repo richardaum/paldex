@@ -1,8 +1,8 @@
 import sys
-sys.path.insert(0, "paldex")
+sys.path.insert(0, ".")
 from server import create_app
 
-SEED_FIXTURE_PATH = "tests/paldex/fixtures/species_seed_fixture.json"
+SEED_FIXTURE_PATH = "tests/fixtures/species_seed_fixture.json"
 
 def test_get_pals_empty_before_any_sync(tmp_path):
     app = create_app(str(tmp_path / "cache.sqlite3"), seed_path=SEED_FIXTURE_PATH)
@@ -140,3 +140,13 @@ def test_saves_endpoint_and_select(tmp_path, monkeypatch):
     assert c.post("/api/save", json={"id": "u1/worldA/Level.sav"}).status_code == 200
     assert c.get("/api/saves").get_json()["selected"] == "u1/worldA/Level.sav"
     assert calls and calls[-1][0].parent.name == "worldA"
+
+
+def test_saves_include_world_name(tmp_path, monkeypatch):
+    d = tmp_path / "SaveGames" / "u" / "w"
+    d.mkdir(parents=True)
+    (d / "Level.sav").write_bytes(b"x")
+    monkeypatch.setenv("PALDEX_SAVE_DIR", str(tmp_path / "SaveGames"))
+    monkeypatch.setattr("server.read_world_name", lambda p: "Meu Mundo")
+    c = create_app(str(tmp_path / "c.sqlite3")).test_client()
+    assert c.get("/api/saves").get_json()["saves"][0]["name"] == "Meu Mundo"
